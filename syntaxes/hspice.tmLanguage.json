@@ -1,0 +1,131 @@
+{
+    "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+    "name": "HSPICE",
+    "scopeName": "source.sp",
+    "patterns": [
+        { "include": "#comments" },
+        { "include": "#strings" },
+        { "include": "#options" },
+        { "include": "#controls" },
+        { "include": "#elements" },
+        { "include": "#numbers" },
+        { "include": "#parameters" },
+        { "include": "#operators" }
+    ],
+    "repository": {
+        "comments": {
+            "patterns": [
+                {
+                    "name": "comment.line.asterisk.hspice",
+                    "match": "^\\s*\\*.*$"
+                },
+                {
+                    "name": "comment.line.dollar.hspice",
+                    "match": "\\$.*$"
+                }
+            ]
+        },
+        "strings": {
+            "name": "string.quoted.double.hspice",
+            "begin": "\"",
+            "end": "\"",
+            "patterns": [
+                {
+                    "name": "constant.character.escape.hspice",
+                    "match": "\\\\."
+                }
+            ]
+        },
+        "options": {
+            "begin": "(?i)^\\s*(\\.(?:option|opt))\\b",
+            "beginCaptures": {
+                "1": { "name": "keyword.control.definition.hspice" }
+            },
+            "end": "$",
+            "patterns": [
+                { "include": "#comments" },
+                { "include": "#numbers" },
+                {
+                    "name": "variable.parameter.option.assignment.hspice",
+                    "match": "(?i)\\b([a-z0-9_]+)(?=\\s*=)"
+                },
+                {
+                    "name": "keyword.operator.assignment.hspice",
+                    "match": "="
+                },
+                {
+                    "name": "support.constant.option.flag.hspice",
+                    "match": "(?i)\\b(accurate|brief|co|node|list|post|probe|nopage|nomod|ingold|numdgt)\\b"
+                },
+                {
+                    "name": "variable.parameter.option.generic.hspice",
+                    "match": "(?i)\\b[a-z][a-z0-9_]*\\b"
+                }
+            ]
+        },
+        "controls": {
+            "patterns": [
+                {
+                    "name": "keyword.control.simulation.hspice",
+                    "match": "(?i)^\\s*\\.(tran|ac|dc|noise|op|pz|sens|tf|disto)\\b"
+                },
+                {
+                    "name": "keyword.control.definition.hspice",
+                    "match": "(?i)^\\s*\\.(subckt|ends|model|param|global|include|lib|data|enddata|protect|unprotect)\\b"
+                },
+                {
+                    "name": "keyword.other.directive.hspice",
+                    "match": "(?i)^\\s*\\.(meas|measure|print|plot|probe|save|alter)\\b"
+                },
+                {
+                    "name": "keyword.other.generic.hspice",
+                    "match": "^\\s*\\.[a-zA-Z0-9_]+"
+                }
+            ]
+        },
+        "elements": {
+            "patterns": [
+                {
+                    "name": "storage.type.component.hspice",
+                    "match": "(?i)^\\s*[rcldqmjbk]\\w*"
+                },
+                {
+                    "name": "storage.type.source.hspice",
+                    "match": "(?i)^\\s*[vighef]\\w*"
+                },
+                {
+                    "name": "entity.name.function.subcircuit-call.hspice",
+                    "match": "(?i)^\\s*x\\w*"
+                }
+            ]
+        },
+        "numbers": {
+            "patterns": [
+                {
+                    "name": "constant.numeric.engineering.hspice",
+                    "match": "(?i)(\\b\\d+(\\.\\d+)?|\\.\\d+)(t|g|meg|x|k|m|u|n|p|f|a|db)?\\b"
+                }
+            ]
+        },
+        "parameters": {
+            "patterns": [
+                {
+                    "name": "variable.parameter.assignment.hspice",
+                    "match": "(?i)\\b[a-z][a-z0-9_]*\\s*="
+                }
+            ]
+        },
+        "operators": {
+            "patterns": [
+                {
+                    "name": "keyword.operator.continuation.hspice",
+                    "match": "^\\s*\\+"
+                },
+                {
+                    "name": "keyword.operator.arithmetic.hspice",
+                    "match": "=|\\+|\\-|\\*|\\/|\\(|\\)"
+                }
+            ]
+        }
+    }
+}

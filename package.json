@@ -1,0 +1,25 @@
+{
+  "name": "hspice-netlist",
+  "displayName": "HSPICE Netlist",
+  "description": "Syntax highlighting for HSPICE netlist",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.107.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [{
+      "id": "hspice",
+      "aliases": ["HSPICE", "hspice"],
+      "extensions": [".sp",".cir",".spice",".hspice"],
+      "configuration": "./language-configuration.json"
+    }],
+    "grammars": [{
+      "language": "hspice",
+      "scopeName": "source.sp",
+      "path": "./syntaxes/hspice.tmLanguage.json"
+    }]
+  }
+}
