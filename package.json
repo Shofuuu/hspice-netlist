@@ -2,14 +2,14 @@
   "name": "hspice-netlist",
   "displayName": "HSPICE Language Support",
   "description": "Syntax highlighting and snippets for HSPICE",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "publisher": "MuhammadShofuwanAnwar",
   "repository": {
     "type": "git",
     "url": "https://github.com/Shofuuu/hspice-netlist.git"
   },
   "engines": {
-    "vscode": "^1.107.0"
+    "vscode": "*"
   },
   "categories": [
     "Programming Languages"
