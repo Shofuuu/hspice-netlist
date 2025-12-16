@@ -1,65 +1,72 @@
-# hspice-netlist README
+# HSPICE Language Support for VS Code
 
-This is the README for your extension "hspice-netlist". After writing up a brief description, we recommend including the following sections.
+![HSPICE Extension Preview](hspice-netlist.png)
+
+This extension provides robust syntax highlighting and code snippets for **HSPICE** netlists (`.sp`, `.lis`, `.hsp`). It is designed to make circuit simulation workflows faster and less error-prone by providing "cheat sheet" style auto-completion.
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
-
-For example if there is an image subfolder under your extension project workspace:
-
-\!\[feature X\]\(images/feature-x.png\)
-
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
-
-## Requirements
-
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
-
-## Extension Settings
-
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
-
-For example:
-
-This extension contributes the following settings:
-
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
-
-## Known Issues
-
-Calling out known issues can help limit users opening duplicate issues against your extension.
-
-## Release Notes
-
-Users appreciate release notes as you update your extension.
-
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
+* **Syntax Highlighting:**
+    * Case-insensitive support (e.g., `.TRAN` and `.tran` are both recognized).
+    * Differentiates between **Simulations** (`.tran`, `.ac`), **Definitions** (`.subckt`, `.param`), and **Options** (`.option`).
+    * Highlights engineering units (`u`, `n`, `meg`, `k`).
+    * Supports full-line comments (`*`) and inline comments (`$`).
+* **Intelligent Snippets:**
+    * Auto-completion for complex sources (`PULSE`, `SIN`, `PWL`).
+    * Templates for analyses (`.tran`, `.dc`, `.ac`) with tab-stops.
+    * Dropdown menus for `.meas` analysis types.
 
 ---
 
-## Working with Markdown
+## HSPICE Cheat Sheet (Snippets)
 
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
+Type the **Trigger** command and press `Tab` or `Enter` to expand it.
 
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
+### Sources & Stimuli
 
-## For more information
+| Trigger | Name | Expands To (Example) |
+| :--- | :--- | :--- |
+| `pulse` | **Pulse Source** | `PULSE(v1 v2 td tr tf pw per)` |
+| `sin` | **Sinusoidal** | `SIN(vo va freq td theta phase)` |
+| `pwl` | **Piece-Wise Linear** | `PWL(t1 v1 t2 v2 t3 v3)` |
+| `ic` | **Initial Condition** | `.IC V(node)=voltage` |
 
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
+### Analysis Commands
 
-**Enjoy!**
+| Trigger | Name | Description |
+| :--- | :--- | :--- |
+| `.tran` | **Transient** | Sets step, stop, and start times. |
+| `.dc` | **DC Sweep** | Sweeps a source from start to stop values. |
+| `.ac` | **AC Analysis** | Selects DEC/OCT/LIN via dropdown menu. |
+| `.meas` | **Measure** | Template for `.meas TRAN/AC/DC ...` |
+| `.meas delay`| **Prop. Delay** | Template for `TRIG` and `TARG` delay measurement. |
+
+### Circuit Definitions
+
+| Trigger | Name | Description |
+| :--- | :--- | :--- |
+| `.subckt` | **Subcircuit** | Creates a `.SUBCKT` block with `.ENDS`. |
+| `.param` | **Parameter** | Defines a variable (e.g., `vdd=3.3`). |
+| `.option` | **Options** | Adds `.option post=1` or other settings. |
+| `.inc` | **Include** | Includes an external netlist file. |
+| `.lib` | **Library** | Loads a model library file. |
+
+---
+
+## Syntax Highlighting Rules
+
+This extension follows standard HSPICE formatting rules:
+
+| Element | Rule | Example |
+| :--- | :--- | :--- |
+| **Comments** | Starts with `*` (full line) or `$` (inline). | `* This is a comment` <br> `R1 1 0 1k $ Resistor` |
+| **Line Break** | Starts with `+` at the beginning of a line. | `.tran 1n 100n`<br>`+ start=0` |
+| **Numbers** | Supports engineering suffixes. | `10k`, `0.1u`, `10meg`, `1.5T` |
+| **Options** | Highlights keys and values differently. | `.option runlvl=6 method=gear` |
+
+---
+
+## Author
+
+**Muhammad Shofuwan Anwar**
+Email: [muh.shofuwan.a@mail.ugm.ac.id](mailto:muh.shofuwan.a@mail.ugm.ac.id)
