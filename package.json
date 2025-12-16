@@ -20,6 +20,12 @@
       "language": "hspice",
       "scopeName": "source.sp",
       "path": "./syntaxes/hspice.tmLanguage.json"
-    }]
+    }],
+    "snippets": [
+        {
+            "language": "hspice",
+            "path": "./snippets/hspice.code-snippets"
+        }
+    ]
   }
 }

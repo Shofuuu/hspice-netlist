@@ -71,7 +71,7 @@
                 },
                 {
                     "name": "keyword.control.definition.hspice",
-                    "match": "(?i)^\\s*\\.(subckt|ends|model|param|global|include|lib|data|enddata|protect|unprotect)\\b"
+                    "match": "(?i)^\\s*\\.(subckt|ends|end|model|param|global|include|lib|data|enddata|protect|unprotect)\\b"
                 },
                 {
                     "name": "keyword.other.directive.hspice",

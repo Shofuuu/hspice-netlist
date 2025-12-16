@@ -1,0 +1,96 @@
+{
+    "Pulse Source": {
+        "prefix": "pulse",
+        "body": [
+            "pulse(${1:v1} ${2:v2} ${3:td} ${4:tr} ${5:tf} ${6:pw} ${7:per})"
+        ],
+        "description": "Pulse source syntax: v1 v2 td tr tf pw per"
+    },
+    "Sinusoidal Source": {
+        "prefix": "sin",
+        "body": [
+            "sin(${1:vo} ${2:va} ${3:freq} ${4:td} ${5:theta} ${6:phase})"
+        ],
+        "description": "Sinusoidal source syntax"
+    },
+    "Piece-Wise Linear Source": {
+        "prefix": "pwl",
+        "body": [
+            "pwl(${1:t1} ${2:v1} ${3:t2} ${4:v2} ${5:t3} ${6:v3})"
+        ],
+        "description": "Piece-Wise Linear Source"
+    },
+    "Transient Analysis": {
+        "prefix": ".tran",
+        "body": [
+            ".tran ${1:step} ${2:stop} ${3:start} ${4:max_step}"
+        ],
+        "description": "Transient analysis definition"
+    },
+    "DC Sweep": {
+        "prefix": ".dc",
+        "body": [
+            ".dc ${1:source_name} ${2:start} ${3:stop} ${4:step}"
+        ],
+        "description": "DC Sweep Analysis"
+    },
+    "AC Analysis": {
+        "prefix": ".ac",
+        "body": [
+            ".ac ${1|DEC,OCT,LIN|} ${2:points} ${3:fstart} ${4:fstop}"
+        ],
+        "description": "AC Analysis (Frequency Sweep)"
+    },
+    "Measure Generic": {
+        "prefix": ".meas",
+        "body": [
+            ".meas ${1|TRAN,AC,DC|} ${2:result_name} ${3|MAX,MIN,AVG,RMS,PP|} ${4:variable} FROM=${5:start_time} TO=${6:end_time}"
+        ],
+        "description": "Measure Max/Min/Avg/RMS"
+    },
+    "Measure Delay (Trig/Targ)": {
+        "prefix": ".meas delay",
+        "body": [
+            ".meas ${1|TRAN,AC,DC|} ${2:delay_name} trig ${3:v(in)} val=${4:0.5} rise=${5:1}",
+            "+ targ ${6:v(out)} val=${7:0.5} rise=${8:1}"
+        ],
+        "description": "Measure propagation delay using Trigger and Target"
+    },
+    "Subcircuit Definition": {
+        "prefix": ".subckt",
+        "body": [
+            ".subckt ${1:name} ${2:nodes}",
+            "\t$0",
+            ".ends $1"
+        ],
+        "description": "Define a subcircuit"
+    },
+    "Parameter Definition": {
+        "prefix": ".param",
+        "body": [
+            ".param ${1:name} = ${2:value}"
+        ],
+        "description": "Define a parameter"
+    },
+    "Include File": {
+        "prefix": ".inc",
+        "body": [
+            ".include '${1:path/to/file.sp}'"
+        ],
+        "description": "Include another netlist"
+    },
+    "Library Call": {
+        "prefix": ".lib",
+        "body": [
+            ".lib '${1:path/to/model.l}' ${2:corner_name}"
+        ],
+        "description": "Load a library file"
+    },
+    "Standard Option": {
+        "prefix": ".option",
+        "body": [
+            ".option ${1:post=1}"
+        ],
+        "description": "Standard option directive"
+    }
+}
