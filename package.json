@@ -1,8 +1,9 @@
 {
   "name": "hspice-netlist",
-  "displayName": "HSPICE Netlist",
-  "description": "Syntax highlighting for HSPICE netlist",
-  "version": "0.0.1",
+  "displayName": "HSPICE Language Support",
+  "description": "Syntax highlighting and snippets for HSPICE",
+  "version": "1.0.0",
+  "publisher": "shofuwan",
   "engines": {
     "vscode": "^1.107.0"
   },
