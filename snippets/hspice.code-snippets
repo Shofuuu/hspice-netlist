@@ -1,4 +1,30 @@
 {
+    "Author Signature": {
+        "prefix": "author",
+        "body": [
+            "**** author: ${1:Muhammad Shofuwan Anwar}"
+        ],
+        "description": "Inserts author signature"
+    },
+    "Date and Time": {
+        "prefix": "datetime",
+        "body": [
+            "**** created: $CURRENT_DATE $CURRENT_MONTH_NAME $CURRENT_YEAR, $CURRENT_HOUR:$CURRENT_MINUTE"
+        ],
+        "description": "Inserts current date and time"
+    },
+    "Header Block": {
+        "prefix": "header",
+        "body": [
+            "**************************************************",
+            "**** author: ${1:Muhammad Shofuwan Anwar}",
+            "**** created: $CURRENT_DATE $CURRENT_MONTH_NAME $CURRENT_YEAR, $CURRENT_HOUR:$CURRENT_MINUTE",
+            "**** description: ${2:Netlist Description}",
+            "**************************************************",
+            "$0"
+        ],
+        "description": "Inserts a full file header"
+    },
     "Pulse Source": {
         "prefix": "pulse",
         "body": [

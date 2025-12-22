@@ -2,7 +2,7 @@
   "name": "hspice-netlist",
   "displayName": "HSPICE Language Support",
   "description": "Syntax highlighting and snippets for HSPICE",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "publisher": "MuhammadShofuwanAnwar",
   "icon": "icon.png",
   "repository": {
