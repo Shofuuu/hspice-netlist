@@ -13,7 +13,7 @@
   },
   "categories": [
     "Programming Languages"
-  ],
+  ],vs
   "contributes": {
     "languages": [{
       "id": "hspice",
