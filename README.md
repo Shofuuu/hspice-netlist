@@ -14,13 +14,20 @@ This extension provides robust syntax highlighting and code snippets for **HSPIC
 * **Intelligent Snippets:**
     * Auto-completion for complex sources (`PULSE`, `SIN`, `PWL`).
     * Templates for analyses (`.tran`, `.dc`, `.ac`) with tab-stops.
-    * Dropdown menus for `.meas` analysis types.
+    * Automatic header generation with timestamps.
 
 ---
 
 ## HSPICE Cheat Sheet (Snippets)
 
 Type the **Trigger** command and press `Tab` or `Enter` to expand it.
+
+### Documentation & Headers
+| Trigger | Name | Expands To |
+| :--- | :--- | :--- |
+| `header` | **Full Header** | Creates a file header block with Author, Date, and Description. |
+| `author` | **Author Signature** | Inserts `**** author: Name`. |
+| `datetime`| **Timestamp** | Inserts `**** created: [Current Date & Time]`. |
 
 ### Sources & Stimuli
 

@@ -2,7 +2,7 @@
     "Author Signature": {
         "prefix": "author",
         "body": [
-            "**** author: ${1:Muhammad Shofuwan Anwar}"
+            "**** author: ${1:author name}"
         ],
         "description": "Inserts author signature"
     },
@@ -17,7 +17,7 @@
         "prefix": "header",
         "body": [
             "**************************************************",
-            "**** author: ${1:Muhammad Shofuwan Anwar}",
+            "**** author: ${1:author name}",
             "**** created: $CURRENT_DATE $CURRENT_MONTH_NAME $CURRENT_YEAR, $CURRENT_HOUR:$CURRENT_MINUTE",
             "**** description: ${2:Netlist Description}",
             "**************************************************",
