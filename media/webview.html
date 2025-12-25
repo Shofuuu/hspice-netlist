@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HSPICE PWL Designer</title>
+    <style>
+        :root {
+            --bg: var(--vscode-editor-background);
+            --fg: var(--vscode-editor-foreground);
+            --border: var(--vscode-panel-border);
+            --highlight: var(--vscode-list-hoverBackground);
+            --input-bg: var(--vscode-input-background);
+            --input-fg: var(--vscode-input-foreground);
+            --btn-bg: var(--vscode-button-background);
+            --btn-fg: var(--vscode-button-foreground);
+        }
+        
+        body {
+            background-color: var(--bg);
+            color: var(--fg);
+            font-family: var(--vscode-font-family);
+            padding: 0; margin: 0;
+            display: flex; flex-direction: column; height: 100vh;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* --- Toolbar --- */
+        .toolbar {
+            padding: 10px; display: flex; gap: 10px; align-items: center;
+            background: var(--vscode-editor-inactiveSelectionBackground);
+            border-bottom: 1px solid var(--border);
+        }
+        input {
+            background: var(--input-bg); color: var(--input-fg);
+            border: 1px solid var(--border); padding: 4px; width: 60px;
+        }
+        label { font-size: 12px; font-weight: bold; margin-right: 5px; }
+        button {
+            background: var(--btn-bg); color: var(--btn-fg);
+            border: none; padding: 6px 12px; cursor: pointer;
+        }
+        button:hover { opacity: 0.9; }
+
+        /* --- Canvas --- */
+        .canvas-container {
+            flex-grow: 1; position: relative; overflow: hidden; cursor: crosshair;
+        }
+        canvas { display: block; }
+
+        /* --- Context Menu & Submenus --- */
+        #context-menu, .submenu {
+            display: none; position: absolute;
+            background: var(--vscode-menu-background);
+            color: var(--vscode-menu-foreground);
+            border: 1px solid var(--vscode-menu-border);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            z-index: 1000; min-width: 160px;
+            padding: 4px 0;
+        }
+        .menu-item {
+            padding: 8px 12px; font-size: 13px; cursor: pointer;
+            display: flex; justify-content: space-between; align-items: center;
+            position: relative;
+        }
+        .menu-item:hover {
+            background: var(--vscode-menu-selectionBackground);
+            color: var(--vscode-menu-selectionForeground);
+        }
+        .menu-separator {
+            height: 1px; background: var(--border); margin: 4px 0;
+        }
+        
+        /* Submenu Logic */
+        .has-submenu:hover > .submenu { display: block; }
+        .submenu {
+            top: 0; left: 100%; margin-left: -1px; /* Align to right */
+        }
+        .arrow { font-size: 10px; opacity: 0.7; }
+
+        /* --- Generator Modal --- */
+        #modal-overlay {
+            display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 2000;
+            justify-content: center; align-items: center;
+        }
+        .modal {
+            background: var(--bg); border: 1px solid var(--border);
+            width: 340px; padding: 15px; box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+        }
+        .modal h3 { margin: 0 0 15px 0; font-size: 14px; text-transform: uppercase; border-bottom: 1px solid var(--border); padding-bottom: 8px;}
+        .form-row { display: flex; align-items: center; margin-bottom: 10px; }
+        .form-row label { flex: 1; font-size: 12px; display: flex; align-items: center; }
+        .form-row input { flex: 0.5; }
+        
+        /* Tooltip Icon (i) */
+        .info-icon {
+            display: inline-block; width: 14px; height: 14px; line-height: 14px;
+            text-align: center; border-radius: 50%; background: #555; color: #fff;
+            font-size: 10px; margin-left: 5px; cursor: help; font-style: normal; position: relative;
+        }
+        .info-icon:hover::after {
+            content: attr(data-tooltip);
+            position: absolute; background: #333; color: #fff; padding: 8px;
+            font-size: 11px; border-radius: 4px; white-space: pre-wrap; width: 180px;
+            left: 50%; transform: translateX(-50%); bottom: 20px;
+            pointer-events: none; z-index: 3000; text-align: left; box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+        }
+
+        .modal-buttons { display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end; }
+        .btn-cancel { background: #555; }
+
+        /* --- Footer --- */
+        .footer {
+            padding: 10px; border-top: 1px solid var(--border);
+            background: var(--bg); height: 120px;
+            display: flex; flex-direction: column; gap: 5px;
+        }
+        .output-box {
+            flex-grow: 1; font-family: 'Courier New', monospace;
+            background: var(--input-bg);
+            padding: 5px; overflow: auto; white-space: pre;
+            border: 1px solid var(--border);
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="toolbar">
+    <div><label>Name</label><input type="text" id="sigName" value="vin" style="width:80px"></div>
+    <div><label>Max T(ns)</label><input type="number" id="maxTime" value="100"></div>
+    <div><label>Max V</label><input type="number" id="maxVolts" value="3.3"></div>
+    <div style="flex-grow:1"></div>
+    <button id="resetBtn">Reset</button>
+</div>
+
+<div class="canvas-container" id="container">
+    <canvas id="canvas"></canvas>
+    
+    <div id="context-menu">
+        <div class="menu-item" id="menu-add">Add Point Here</div>
+        <div class="menu-item" id="menu-snap">Snap to Nearest Y</div>
+        <div class="menu-item" id="menu-delete">Delete Point</div>
+        <div class="menu-separator"></div>
+        
+        <div class="menu-item has-submenu">
+            Generate <span class="arrow">▶</span>
+            <div class="submenu">
+                <div class="menu-item" onclick="openGenerator('Square')">Square Wave</div>
+                <div class="menu-item" onclick="openGenerator('Triangle')">Triangle Wave</div>
+                <div class="menu-item" onclick="openGenerator('Sawtooth')">Sawtooth Wave</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="modal-overlay">
+    <div class="modal">
+        <h3 id="modal-title">Generate Wave</h3>
+        
+        <div class="form-row">
+            <label>V High (v) <i class="info-icon" data-tooltip="The maximum peak voltage.">i</i></label>
+            <input type="number" id="gen-vhigh" value="3.3">
+        </div>
+        <div class="form-row">
+            <label>V Low (v) <i class="info-icon" data-tooltip="The minimum valley voltage.">i</i></label>
+            <input type="number" id="gen-vlow" value="0">
+        </div>
+        <div class="form-row">
+            <label>Period (ns) <i class="info-icon" data-tooltip="Duration of one cycle. Updates Frequency.">i</i></label>
+            <input type="number" id="gen-period" value="20">
+        </div>
+        <div class="form-row">
+            <label>Freq (MHz) <i class="info-icon" data-tooltip="Cycles per second. Updates Period.">i</i></label>
+            <input type="number" id="gen-freq" value="50">
+        </div>
+        
+        <div class="form-row" id="row-duty">
+            <label>Duty Cycle (%) <i class="info-icon" data-tooltip="% of period before falling edge starts.">i</i></label>
+            <input type="number" id="gen-duty" value="50">
+        </div>
+        <div class="form-row" id="row-tr">
+            <label>Time Rise (ns) <i class="info-icon" data-tooltip="Time to transition from Low to High.">i</i></label>
+            <input type="number" id="gen-tr" value="0.1" step="0.1">
+        </div>
+        <div class="form-row" id="row-tf">
+            <label>Time Fall (ns) <i class="info-icon" data-tooltip="Time to transition from High to Low.">i</i></label>
+            <input type="number" id="gen-tf" value="0.1" step="0.1">
+        </div>
+
+        <div class="form-row">
+            <label>Cycles <i class="info-icon" data-tooltip="Number of repetitions.">i</i></label>
+            <input type="number" id="gen-cycles" value="5">
+        </div>
+
+        <div class="modal-buttons">
+            <button class="btn-cancel" onclick="closeGenerator()">Cancel</button>
+            <button onclick="generateConfirmed()">Generate</button>
+        </div>
+    </div>
+</div>
+
+<div class="footer">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-size:11px; opacity:0.7">Left Drag: Move | Right Click: Menu</span>
+        <div>
+            <button id="copyBtn" style="font-size:11px; padding:2px 8px;">Copy</button>
+            <button id="insertBtn" style="font-size:11px; padding:2px 8px;">Insert to Editor</button>
+        </div>
+    </div>
+    <div class="output-box" id="codeOutput">...</div>
+</div>
+
+<script>
+    const vscode = acquireVsCodeApi();
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const menu = document.getElementById('context-menu');
+    
+    // --- State ---
+    let points = [{t: 0, v: 0}, {t: 100, v: 0}]; 
+    let config = { maxTime: 100, maxVolts: 3.3 };
+    let dragIndex = -1;
+    let mouse = { x: 0, y: 0, t: 0, v: 0, active: false };
+    let contextTargetIndex = -1; 
+    let activeGenType = ""; 
+
+    const PAD = { left: 40, right: 20, top: 20, bottom: 30 };
+
+    function init() {
+        resize();
+        window.addEventListener('resize', resize);
+        updateConfig();
+        requestAnimationFrame(animLoop);
+    }
+
+    function animLoop() {
+        draw();
+        requestAnimationFrame(animLoop);
+    }
+
+    function updateConfig() {
+        config.maxTime = parseFloat(document.getElementById('maxTime').value) || 100;
+        config.maxVolts = parseFloat(document.getElementById('maxVolts').value) || 3.3;
+        generateCode();
+    }
+
+    document.getElementById('maxTime').addEventListener('change', updateConfig);
+    document.getElementById('maxVolts').addEventListener('change', updateConfig);
+    document.getElementById('sigName').addEventListener('input', generateCode);
+    
+    document.getElementById('resetBtn').addEventListener('click', () => {
+        points = [{t: 0, v: 0}, {t: config.maxTime, v: 0}];
+        generateCode();
+    });
+
+    // --- Generator Logic ---
+    window.openGenerator = function(type) {
+        menu.style.display = 'none';
+        activeGenType = type;
+        document.getElementById('modal-title').innerText = "Generate " + type;
+        document.getElementById('modal-overlay').style.display = 'flex';
+        
+        const isSquare = (type === 'Square');
+        // Show/Hide fields relevant to Square wave
+        document.getElementById('row-duty').style.display = isSquare ? 'flex' : 'none';
+        document.getElementById('row-tr').style.display = isSquare ? 'flex' : 'none';
+        document.getElementById('row-tf').style.display = isSquare ? 'flex' : 'none';
+    };
+
+    window.closeGenerator = function() {
+        document.getElementById('modal-overlay').style.display = 'none';
+    };
+
+    const inpPeriod = document.getElementById('gen-period');
+    const inpFreq = document.getElementById('gen-freq');
+    inpPeriod.addEventListener('input', () => {
+        const p = parseFloat(inpPeriod.value); if(p > 0) inpFreq.value = (1000 / p).toFixed(3);
+    });
+    inpFreq.addEventListener('input', () => {
+        const f = parseFloat(inpFreq.value); if(f > 0) inpPeriod.value = (1000 / f).toFixed(3);
+    });
+
+    window.generateConfirmed = function() {
+        const vHigh = parseFloat(document.getElementById('gen-vhigh').value) || 3.3;
+        const vLow = parseFloat(document.getElementById('gen-vlow').value) || 0;
+        const period = parseFloat(document.getElementById('gen-period').value) || 20;
+        const cycles = parseInt(document.getElementById('gen-cycles').value) || 1;
+        const duty = (parseFloat(document.getElementById('gen-duty').value) || 50) / 100;
+        // NEW: Read tr and tf
+        const tr = parseFloat(document.getElementById('gen-tr').value) || 0;
+        const tf = parseFloat(document.getElementById('gen-tf').value) || 0;
+
+        let newPoints = [];
+
+        for (let i = 0; i < cycles; i++) {
+            const startT = i * period;
+            
+            if (activeGenType === 'Square') {
+                const fallStartT = startT + (period * duty);
+                // 1. Start Low
+                newPoints.push({ t: startT, v: vLow });
+                // 2. End of Rise (High)
+                newPoints.push({ t: startT + tr, v: vHigh });
+                // 3. Start of Fall (High)
+                newPoints.push({ t: fallStartT, v: vHigh });
+                // 4. End of Fall (Low)
+                newPoints.push({ t: fallStartT + tf, v: vLow });
+            } 
+            else if (activeGenType === 'Triangle') {
+                newPoints.push({ t: startT, v: vLow });
+                newPoints.push({ t: startT + (period/2), v: vHigh });
+            }
+            else if (activeGenType === 'Sawtooth') {
+                newPoints.push({ t: startT, v: vLow });
+                newPoints.push({ t: startT + period, v: vHigh });
+            }
+        }
+        
+        const finalT = cycles * period;
+        // Ensure it ends low if it's not sawtooth (sawtooth naturally ends high at period)
+        if (activeGenType !== 'Sawtooth') {
+             newPoints.push({ t: finalT, v: vLow });
+        }
+
+        points = newPoints;
+        
+        if (finalT > config.maxTime) {
+            config.maxTime = finalT;
+            document.getElementById('maxTime').value = finalT;
+        }
+
+        generateCode();
+        closeGenerator();
+    };
+
+    // --- Helpers ---
+    function mapToPx(t, v) {
+        const drawW = canvas.width - PAD.left - PAD.right;
+        const drawH = canvas.height - PAD.top - PAD.bottom;
+        const x = PAD.left + (t / config.maxTime) * drawW;
+        const y = (PAD.top + drawH) - (v / config.maxVolts) * drawH;
+        return {x, y};
+    }
+
+    function mapToUnits(x, y) {
+        const drawW = canvas.width - PAD.left - PAD.right;
+        const drawH = canvas.height - PAD.top - PAD.bottom;
+        let t = ((x - PAD.left) / drawW) * config.maxTime;
+        let v = ((PAD.top + drawH - y) / drawH) * config.maxVolts;
+        t = Math.max(0, Math.min(t, config.maxTime));
+        v = Math.max(0, Math.min(v, config.maxVolts));
+        return {t, v};
+    }
+
+    // --- Interactions ---
+    canvas.addEventListener('mousemove', e => {
+        const rect = canvas.getBoundingClientRect();
+        mouse.x = e.clientX - rect.left;
+        mouse.y = e.clientY - rect.top;
+        mouse.active = true;
+        const u = mapToUnits(mouse.x, mouse.y);
+        mouse.t = u.t; mouse.v = u.v;
+
+        if (dragIndex !== -1) {
+            let newT = mouse.t;
+            if (dragIndex > 0) {
+                const prevT = points[dragIndex - 1].t;
+                if (newT <= prevT) { newT = prevT; }
+            }
+            if (dragIndex < points.length - 1) {
+                const nextT = points[dragIndex + 1].t;
+                if (newT >= nextT) { newT = nextT; }
+            }
+            points[dragIndex].t = newT;
+            points[dragIndex].v = mouse.v;
+            generateCode();
+        }
+    });
+
+    canvas.addEventListener('mouseleave', () => { mouse.active = false; dragIndex = -1; });
+    canvas.addEventListener('mouseup', () => { dragIndex = -1; });
+    
+    canvas.addEventListener('mousedown', e => {
+        if (e.button !== 0) return;
+        const hit = findPointUnderMouse();
+        if (hit !== -1) dragIndex = hit; 
+    });
+
+    // --- Context Menu Logic ---
+    canvas.addEventListener('contextmenu', e => {
+        e.preventDefault();
+        const hit = findPointUnderMouse();
+        contextTargetIndex = hit;
+        
+        const menuAdd = document.getElementById('menu-add');
+        const menuSnap = document.getElementById('menu-snap');
+        const menuDel = document.getElementById('menu-delete');
+
+        if (hit !== -1) {
+            menuAdd.style.display = 'none';
+            menuDel.style.display = 'block';
+            menuSnap.style.display = 'block';
+        } else {
+            menuAdd.style.display = 'block';
+            menuDel.style.display = 'none';
+            menuSnap.style.display = 'none';
+        }
+
+        let left = e.clientX; let top = e.clientY;
+        if(left + 160 > window.innerWidth) left -= 160;
+        menu.style.left = left + 'px'; menu.style.top = top + 'px';
+        menu.style.display = 'block';
+    });
+
+    document.addEventListener('mousedown', e => {
+        if (!e.target.closest('#context-menu')) menu.style.display = 'none';
+    });
+
+    // --- Menu Actions ---
+    document.getElementById('menu-add').addEventListener('click', () => {
+        menu.style.display = 'none';
+        points.push({ t: mouse.t, v: mouse.v });
+        points.sort((a, b) => a.t - b.t); 
+        generateCode();
+    });
+
+    document.getElementById('menu-snap').addEventListener('click', () => {
+        menu.style.display = 'none';
+        if (contextTargetIndex === -1) return;
+        const currentV = points[contextTargetIndex].v;
+        const otherVoltages = points.filter((p, index) => index !== contextTargetIndex).map(p => p.v);
+        const uniqueLevels = [...new Set(otherVoltages)];
+        if (uniqueLevels.length === 0) return; 
+        let closestV = uniqueLevels[0]; let minDiff = Math.abs(currentV - uniqueLevels[0]);
+        uniqueLevels.forEach(lvl => {
+            const diff = Math.abs(currentV - lvl);
+            if (diff < minDiff) { minDiff = diff; closestV = lvl; }
+        });
+        points[contextTargetIndex].v = closestV;
+        generateCode();
+    });
+
+    document.getElementById('menu-delete').addEventListener('click', () => {
+        menu.style.display = 'none';
+        if (contextTargetIndex !== -1 && points.length > 1) {
+            points.splice(contextTargetIndex, 1);
+            generateCode();
+        }
+    });
+
+    function findPointUnderMouse() {
+        const RADIUS = 8; 
+        for (let i = 0; i < points.length; i++) {
+            const p = points[i];
+            const px = mapToPx(p.t, p.v);
+            if (Math.abs(mouse.x - px.x) < RADIUS && Math.abs(mouse.y - px.y) < RADIUS) return i;
+        }
+        return -1;
+    }
+
+    function resize() {
+        const container = document.getElementById('container');
+        canvas.width = container.clientWidth;
+        canvas.height = container.clientHeight;
+    }
+
+    function draw() {
+        const w = canvas.width; const h = canvas.height;
+        ctx.clearRect(0, 0, w, h);
+
+        // Grid
+        ctx.strokeStyle = '#333'; ctx.fillStyle = '#888'; ctx.font = '10px sans-serif'; ctx.lineWidth = 1;
+        ctx.beginPath();
+        for(let i=0; i<=5; i++) {
+            const val = (config.maxTime / 5) * i;
+            const px = mapToPx(val, 0).x;
+            ctx.moveTo(px, PAD.top); ctx.lineTo(px, h - PAD.bottom);
+            ctx.fillText(val.toFixed(0) + 'n', px - 10, h - 5);
+        }
+        for(let i=0; i<=4; i++) {
+            const val = (config.maxVolts / 4) * i;
+            const py = mapToPx(0, val).y;
+            ctx.moveTo(PAD.left, py); ctx.lineTo(w - PAD.right, py);
+            ctx.fillText(val.toFixed(1) + 'v', 5, py + 3);
+        }
+        ctx.stroke();
+
+        // Axis
+        ctx.strokeStyle = '#888'; ctx.lineWidth = 2; ctx.beginPath();
+        const o = mapToPx(0,0); const tr = mapToPx(config.maxTime, config.maxVolts);
+        ctx.moveTo(o.x, o.y); ctx.lineTo(tr.x, o.y);
+        ctx.moveTo(o.x, o.y); ctx.lineTo(o.x, tr.y);
+        ctx.stroke();
+
+        // Signal
+        ctx.strokeStyle = '#4ec9b0'; ctx.lineWidth = 3; ctx.beginPath();
+        if (points.length > 0) {
+            const start = mapToPx(points[0].t, points[0].v);
+            ctx.moveTo(start.x, start.y);
+            for (let i = 1; i < points.length; i++) {
+                const p = mapToPx(points[i].t, points[i].v);
+                ctx.lineTo(p.x, p.y);
+            }
+        }
+        ctx.stroke();
+
+        // Points
+        for (let i = 0; i < points.length; i++) {
+            const p = mapToPx(points[i].t, points[i].v);
+            ctx.fillStyle = (i === dragIndex) ? '#fff' : '#ce9178';
+            ctx.beginPath(); ctx.arc(p.x, p.y, 5, 0, Math.PI * 2); ctx.fill();
+        }
+
+        // Crosshair
+        if (mouse.active) {
+            ctx.strokeStyle = '#fff'; ctx.setLineDash([5, 5]); ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(mouse.x, PAD.top); ctx.lineTo(mouse.x, h - PAD.bottom);
+            ctx.moveTo(PAD.left, mouse.y); ctx.lineTo(w - PAD.right, mouse.y);
+            ctx.stroke(); ctx.setLineDash([]);
+            ctx.fillStyle = '#fff';
+            ctx.fillText(`(${mouse.t.toFixed(2)}n, ${mouse.v.toFixed(2)}v)`, mouse.x + 10, mouse.y - 10);
+        }
+    }
+
+    function generateCode() {
+        const sig = document.getElementById('sigName').value || 'v1';
+        let str = `${sig} ${sig} 0 PWL(\n`;
+        points.forEach(p => {
+            str += `+ ${p.t.toFixed(3)}n ${p.v.toFixed(3)}v\n`;
+        });
+        str += "+ )";
+        document.getElementById('codeOutput').innerText = str;
+    }
+
+    document.getElementById('copyBtn').addEventListener('click', () => {
+        vscode.postMessage({ command: 'copy', text: document.getElementById('codeOutput').innerText });
+    });
+    document.getElementById('insertBtn').addEventListener('click', () => {
+        vscode.postMessage({ command: 'insert', text: document.getElementById('codeOutput').innerText });
+    });
+
+    init();
+</script>
+</body>
+</html>

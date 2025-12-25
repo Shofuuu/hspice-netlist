@@ -2,36 +2,63 @@
   "name": "hspice-netlist",
   "displayName": "HSPICE Language Support",
   "description": "Syntax highlighting and snippets for HSPICE",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "publisher": "MuhammadShofuwanAnwar",
   "icon": "icon.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/Shofuuu/hspice-netlist.git"
   },
+  "main": "./out/extension.js",
   "engines": {
-    "vscode": "*"
+    "vscode": "^1.75.0" 
   },
   "categories": [
     "Programming Languages"
   ],
+  "activationEvents": [
+    "onCommand:hspice-pwl.start"
+  ],
   "contributes": {
-    "languages": [{
-      "id": "hspice",
-      "aliases": ["HSPICE", "hspice"],
-      "extensions": [".sp",".cir",".spice",".hspice"],
-      "configuration": "./language-configuration.json"
-    }],
-    "grammars": [{
-      "language": "hspice",
-      "scopeName": "source.sp",
-      "path": "./syntaxes/hspice.tmLanguage.json"
-    }],
+    "commands": [
+      {
+        "command": "hspice-pwl.start", 
+        "title": "HSPICE: Open Visual PWL Designer"
+      }
+    ],
+    "languages": [
+      {
+        "id": "hspice",
+        "aliases": [ "HSPICE", "hspice" ],
+        "extensions": [ ".sp", ".cir", ".spice", ".hspice" ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "hspice",
+        "scopeName": "source.sp",
+        "path": "./syntaxes/hspice.tmLanguage.json"
+      }
+    ],
     "snippets": [
-        {
-            "language": "hspice",
-            "path": "./snippets/hspice.code-snippets"
-        }
+      {
+        "language": "hspice",
+        "path": "./snippets/hspice.code-snippets"
+      }
     ]
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "@types/vscode": "^1.75.0",
+    "typescript": "^5.0.0"
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
   }
 }
