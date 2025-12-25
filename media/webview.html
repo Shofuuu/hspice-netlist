@@ -2,12 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    
     <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src ${webview.cspSource} 'unsafe-inline';">
-    
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HSPICE PWL Designer</title>
-    
     <link rel="stylesheet" type="text/css" href="{{styleUri}}">
 </head>
 <body>
@@ -17,9 +14,7 @@
         <label>Name</label>
         <input type="text" id="sigName" value="vin" style="width:70px" placeholder="Signal...">
     </div>
-
     <div class="toolbar-separator"></div>
-
     <div class="toolbar-group">
         <label>Max T</label>
         <input type="number" id="maxTime" value="100" style="width:55px">
@@ -31,21 +26,17 @@
             <option value="1">s</option>
         </select>
     </div>
-
     <div class="toolbar-separator"></div>
-
     <div class="toolbar-group">
         <label>Max V</label>
         <input type="number" id="maxVolts" value="3.3" style="width:55px">
         <select id="voltUnit">
             <option value="1e-3">mV</option>
             <option value="1" selected>V</option>
-            <option value="1e3">kV</option>
+            <!-- <option value="1e3">kV</option> -->
         </select>
     </div>
-
     <div style="flex-grow:1"></div>
-    
     <button id="resetBtn">Reset View</button>
 </div>
 
@@ -55,10 +46,10 @@
 
 <div id="context-menu">
     <div class="menu-item" id="menu-add">Add Point Here</div>
-    <div class="menu-item" id="menu-snap">Snap to Grid</div>
+    <div class="menu-item" id="menu-grid">Change Grid Size...</div>
+    <div class="menu-item" id="menu-snap">Snap to Nearest Y</div>
     <div class="menu-item" id="menu-delete">Delete Point</div>
     <div class="menu-separator"></div>
-    
     <div class="menu-item has-submenu">
         Generate <span class="arrow">▶</span>
         <div class="submenu">
@@ -69,51 +60,71 @@
     </div>
 </div>
 
-<div id="modal-overlay">
+<div id="modal-overlay" class="modal-overlay">
     <div class="modal">
         <h3 id="modal-title">Generate Wave</h3>
         <div class="form-row">
-            <label>V High (v) <i class="info-icon" data-tooltip="The maximum peak voltage.">i</i></label>
+            <label>V High (v) <i class="info-icon" data-tooltip="Peak voltage">i</i></label>
             <input type="number" id="gen-vhigh" value="3.3">
         </div>
         <div class="form-row">
-            <label>V Low (v) <i class="info-icon" data-tooltip="The minimum valley voltage.">i</i></label>
+            <label>V Low (v) <i class="info-icon" data-tooltip="Valley voltage">i</i></label>
             <input type="number" id="gen-vlow" value="0">
         </div>
         <div class="form-row">
-            <label>Period (ns) <i class="info-icon" data-tooltip="Duration of one cycle. Updates Frequency.">i</i></label>
+            <label>Period (ns) <i class="info-icon" data-tooltip="One cycle duration">i</i></label>
             <input type="number" id="gen-period" value="20">
         </div>
         <div class="form-row">
-            <label>Freq (MHz) <i class="info-icon" data-tooltip="Cycles per second. Updates Period.">i</i></label>
+            <label>Freq (MHz)</label>
             <input type="number" id="gen-freq" value="50">
         </div>
-        <div class="form-row" id="row-duty">
-            <label>Duty Cycle (%) <i class="info-icon" data-tooltip="% of period before falling edge starts.">i</i></label>
+        <div class="form-row">
+            <label>Duty (%) <i class="info-icon" data-tooltip="% before falling edge">i</i></label>
             <input type="number" id="gen-duty" value="50">
         </div>
-        <div class="form-row" id="row-tr">
-            <label>Time Rise (ns) <i class="info-icon" data-tooltip="Time to transition from Low to High.">i</i></label>
+        <div class="form-row">
+            <label>Rise (ns)</label>
             <input type="number" id="gen-tr" value="0.1" step="0.1">
         </div>
-        <div class="form-row" id="row-tf">
-            <label>Time Fall (ns) <i class="info-icon" data-tooltip="Time to transition from High to Low.">i</i></label>
+        <div class="form-row">
+            <label>Fall (ns)</label>
             <input type="number" id="gen-tf" value="0.1" step="0.1">
         </div>
         <div class="form-row">
-            <label>Cycles <i class="info-icon" data-tooltip="Number of repetitions.">i</i></label>
+            <label>Cycles</label>
             <input type="number" id="gen-cycles" value="5">
         </div>
         <div class="modal-buttons">
-            <button class="btn-cancel" onclick="closeGenerator()">Cancel</button>
-            <button onclick="generateConfirmed()">Generate</button>
+            <button class="btn-cancel" id="gen-cancel">Cancel</button>
+            <button id="gen-confirm">Generate</button>
+        </div>
+    </div>
+</div>
+
+<div id="modal-grid-overlay" class="modal-overlay">
+    <div class="modal modal-sm"> <h3>Grid Settings</h3>
+        <p style="font-size: 11px; opacity:0.7; margin-bottom: 15px;">Set grid spacing. 0 = Auto.</p>
+        
+        <div class="form-row">
+            <label>X (<span id="lbl-grid-x-unit">ns</span>)</label> 
+            <input type="number" id="grid-x" step="any">
+        </div>
+        <div class="form-row">
+            <label>Y (<span id="lbl-grid-y-unit">V</span>)</label> 
+            <input type="number" id="grid-y" step="any">
+        </div>
+        
+        <div class="modal-buttons">
+            <button class="btn-cancel" id="grid-cancel">Cancel</button>
+            <button id="grid-confirm">Apply</button>
         </div>
     </div>
 </div>
 
 <div class="footer">
     <div style="display:flex; justify-content:space-between; align-items:center;">
-        <span style="font-size:11px; opacity:0.7">Left Drag: Move | Right Click: Menu</span>
+        <span style="font-size:11px; opacity:0.7">Left Drag: Move | Right Click: Menu | <b>Snap Enabled</b></span>
         
         <button id="copyBtn" class="icon-btn" title="Copy to Clipboard">
             <svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
@@ -125,6 +136,6 @@
     <div class="output-box" id="codeOutput">...</div>
 </div>
 
-<script src="{{scriptUri}}"></script>
+<script type="module" src="{{scriptUri}}"></script>
 </body>
 </html>

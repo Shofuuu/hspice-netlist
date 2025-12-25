@@ -100,14 +100,11 @@ function parseHSpicePWL(text) {
 function getWebviewContent(webview, context) {
     const htmlPath = path.join(context.extensionPath, 'media', 'webview.html');
     const cssPathOnDisk = vscode.Uri.file(path.join(context.extensionPath, 'media', 'style.css'));
-    const jsPathOnDisk = vscode.Uri.file(path.join(context.extensionPath, 'media', 'script.js'));
+    const jsPathOnDisk = vscode.Uri.file(path.join(context.extensionPath, 'media', 'main.js'));
     const styleUri = webview.asWebviewUri(cssPathOnDisk);
     const scriptUri = webview.asWebviewUri(jsPathOnDisk);
-    // Read the HTML file
     let htmlContent = fs.readFileSync(htmlPath, 'utf8');
-    // Replace the CSP source placeholder (THIS IS CRITICAL)
     htmlContent = htmlContent.replace(/\${webview.cspSource}/g, webview.cspSource);
-    // Replace the URI placeholders
     htmlContent = htmlContent.replace('{{styleUri}}', styleUri.toString());
     htmlContent = htmlContent.replace('{{scriptUri}}', scriptUri.toString());
     return htmlContent;
