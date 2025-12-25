@@ -2,10 +2,14 @@
 
 ![HSPICE Extension Preview](hspice-netlist.png)
 
-This extension provides robust syntax highlighting and code snippets for **HSPICE** netlists (`.sp`, `.lis`, `.hsp`). It is designed to make circuit simulation workflows faster and less error-prone by providing "cheat sheet" style auto-completion.
+This extension provides robust syntax highlighting, code snippets, and a **Visual PWL Designer** for **HSPICE** netlists (`.sp`, `.lis`, `.hsp`). It is designed to make circuit simulation workflows faster and less error-prone.
 
 ## Features
 
+* **Visual PWL Designer (New!):**
+    * Graphically draw Piece-Wise Linear (PWL) sources.
+    * **Waveform Generator:** Automatically create Square, Triangle, and Sawtooth waves.
+    * Export generated code directly to your netlist.
 * **Syntax Highlighting:**
     * Case-insensitive support (e.g., `.TRAN` and `.tran` are both recognized).
     * Differentiates between **Simulations** (`.tran`, `.ac`), **Definitions** (`.subckt`, `.param`), and **Options** (`.option`).
@@ -15,6 +19,24 @@ This extension provides robust syntax highlighting and code snippets for **HSPIC
     * Auto-completion for complex sources (`PULSE`, `SIN`, `PWL`).
     * Templates for analyses (`.tran`, `.dc`, `.ac`) with tab-stops.
     * Automatic header generation with timestamps.
+
+---
+
+## Visual PWL Designer
+
+Stop manually typing coordinate pairs! This extension includes a GUI to visualize and generate PWL sources.
+
+![HSPICE PWL Visual Designer](hspice-pwl.png)
+
+### How to Use
+1. Open the Command Palette (`Ctrl+Shift+P` or `Cmd+Shift+P`).
+2. Run **`HSPICE: Open Visual PWL Designer`**.
+3. **Draw:** Click on the canvas to add points. Drag points to adjust timing/voltage.
+4. **Edit:** Right-click a point to **Delete** it or **Snap** its voltage to the nearest neighbor.
+5. **Generate:** Right-click the background and select `Generate >` to create standard waveforms:
+    * **Square:** Set V_High, V_Low, Frequency, Duty Cycle, **Rise Time**, and **Fall Time**.
+    * **Triangle / Sawtooth:** Customizable frequency and voltage limits.
+6. **Export:** Click **"Insert to Editor"** to paste the generated SPICE code directly into your file.
 
 ---
 
