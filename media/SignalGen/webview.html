@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src ${webview.cspSource} 'unsafe-inline';">
+    <title>HSPICE Signal Designer</title>
+    <link rel="stylesheet" type="text/css" href="{{styleUri}}">
+</head>
+<body>
+
+    <div class="header">
+        <div class="header-group">
+            <label><b>Global Scale</b></label>
+            <div class="input-group">
+                <label>Max Time</label>
+                <input type="number" id="globalMaxTime" value="10">
+            </div>
+            <div class="input-group">
+                <label>Unit</label>
+                <select id="globalTimeUnit">
+                    <option value="1e-12">ps</option>
+                    <option value="1e-9">ns</option>
+                    <option value="1e-6" selected>us</option>
+                    <option value="1e-3">ms</option>
+                    <option value="1">s</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="header-actions">
+            <button class="btn-round btn-add" id="addSignalBtn" title="Add New Signal">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <div class="card-container" id="cardContainer">
+        <div id="empty-state" style="text-align:center; padding: 40px; opacity: 0.5;">
+            Click (+) to add a signal source
+        </div>
+    </div>
+
+    <div class="ruler-container">
+        <canvas id="rulerCanvas"></canvas>
+    </div>
+
+    <div class="footer">
+        <div class="footer-label">
+            <span>Generated Netlist</span>
+            <button id="copyBtn" class="btn-icon" title="Copy to Clipboard">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2-2v1"></path>
+                </svg>
+            </button>
+        </div>
+        <textarea id="outputCode" placeholder="HSPICE code will appear here..."></textarea>
+    </div>
+
+    <div class="modal-overlay" id="addModal">
+        <div class="modal-content">
+            <h3>Add Signal Source</h3>
+            <div class="form-row">
+                <label>Signal Type</label>
+                <select id="newSignalType">
+                    <option value="pulse">Pulse (Square)</option>
+                    <option value="sin">Sinusoidal</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button id="cancelAdd" class="btn-secondary">Cancel</button>
+                <button id="confirmAdd" class="btn-primary">Add</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="editModal">
+        <div class="modal-content">
+            <h3>Edit Parameters</h3>
+            <div id="editParamsContainer"></div>
+            <div class="modal-actions">
+                <button id="cancelEdit" class="btn-secondary">Cancel</button>
+                <button id="confirmEdit" class="btn-primary">Update</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="{{scriptUri}}"></script>
+</body>
+</html>

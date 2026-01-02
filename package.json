@@ -2,7 +2,7 @@
   "name": "hspice-netlist",
   "displayName": "HSPICE Language Support",
   "description": "Syntax highlighting and snippets for HSPICE",
-  "version": "1.1.4",
+  "version": "1.2.0",
   "publisher": "MuhammadShofuwanAnwar",
   "icon": "icon.png",
   "repository": {
@@ -17,13 +17,16 @@
     "Programming Languages"
   ],
   "activationEvents": [
-    "onCommand:hspice-pwl.start"
   ],
   "contributes": {
     "commands": [
       {
         "command": "hspice-pwl.start", 
         "title": "HSPICE: Open Visual PWL Designer"
+      },
+      {
+        "command": "hspice-pwl.openSignalDesigner", 
+        "title": "HSPICE: Open Visual Signal Designer"
       }
     ],
     "languages": [

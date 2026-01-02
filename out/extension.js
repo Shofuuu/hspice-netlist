@@ -20,7 +20,7 @@ function activate(context) {
                 localResourceRoots: [vscode.Uri.file(path.join(context.extensionPath, 'media'))],
                 retainContextWhenHidden: true
             });
-            currentPanel.webview.html = getWebviewContent(currentPanel.webview, context);
+            currentPanel.webview.html = getPWLWebviewContent(currentPanel.webview, context);
             currentPanel.onDidDispose(() => { currentPanel = undefined; }, null, context.subscriptions);
             currentPanel.webview.onDidReceiveMessage(message => {
                 switch (message.command) {
@@ -58,6 +58,29 @@ function activate(context) {
                 vscode.window.showWarningMessage("Could not parse PWL points from selection.");
             }
         }
+    }));
+    context.subscriptions.push(vscode.commands.registerCommand('hspice-pwl.openSignalDesigner', () => {
+        // Create a new panel (or reuse if you want single instance behavior)
+        const signalPanel = vscode.window.createWebviewPanel('hspiceSignalDesigner', 'HSPICE Signal Designer', vscode.ViewColumn.Beside, // Opens in a split view by default
+        {
+            enableScripts: true,
+            localResourceRoots: [vscode.Uri.file(path.join(context.extensionPath, 'media'))],
+            retainContextWhenHidden: true
+        });
+        // Load the NEW html content
+        signalPanel.webview.html = getSignalWebviewContent(signalPanel.webview, context);
+        // Handle messages from the webview (e.g., copy code)
+        signalPanel.webview.onDidReceiveMessage(message => {
+            switch (message.command) {
+                case 'copy':
+                    vscode.env.clipboard.writeText(message.text);
+                    vscode.window.showInformationMessage('HSPICE code copied to clipboard!');
+                    return;
+                case 'error':
+                    vscode.window.showErrorMessage(message.text);
+                    return;
+            }
+        }, null, context.subscriptions);
     }));
 }
 function parseHSpicePWL(text) {
@@ -97,12 +120,22 @@ function parseHSpicePWL(text) {
     }
     return points;
 }
-function getWebviewContent(webview, context) {
-    const htmlPath = path.join(context.extensionPath, 'media', 'webview.html');
-    const cssPathOnDisk = vscode.Uri.file(path.join(context.extensionPath, 'media', 'style.css'));
-    const jsPathOnDisk = vscode.Uri.file(path.join(context.extensionPath, 'media', 'main.js'));
+function getPWLWebviewContent(webview, context) {
+    const htmlPath = path.join(context.extensionPath, 'media/PWLGen', 'webview.html');
+    const cssPathOnDisk = vscode.Uri.file(path.join(context.extensionPath, 'media/PWLGen', 'style.css'));
+    const jsPathOnDisk = vscode.Uri.file(path.join(context.extensionPath, 'media/PWLGen', 'main.js'));
     const styleUri = webview.asWebviewUri(cssPathOnDisk);
     const scriptUri = webview.asWebviewUri(jsPathOnDisk);
+    let htmlContent = fs.readFileSync(htmlPath, 'utf8');
+    htmlContent = htmlContent.replace(/\${webview.cspSource}/g, webview.cspSource);
+    htmlContent = htmlContent.replace('{{styleUri}}', styleUri.toString());
+    htmlContent = htmlContent.replace('{{scriptUri}}', scriptUri.toString());
+    return htmlContent;
+}
+function getSignalWebviewContent(webview, context) {
+    const htmlPath = path.join(context.extensionPath, 'media/SignalGen', 'webview.html');
+    const styleUri = webview.asWebviewUri(vscode.Uri.file(path.join(context.extensionPath, 'media/SignalGen', 'style.css')));
+    const scriptUri = webview.asWebviewUri(vscode.Uri.file(path.join(context.extensionPath, 'media/SignalGen', 'logic.js')));
     let htmlContent = fs.readFileSync(htmlPath, 'utf8');
     htmlContent = htmlContent.replace(/\${webview.cspSource}/g, webview.cspSource);
     htmlContent = htmlContent.replace('{{styleUri}}', styleUri.toString());

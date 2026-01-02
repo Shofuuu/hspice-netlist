@@ -2,14 +2,18 @@
 
 ![HSPICE Extension Preview](hspice-netlist.png)
 
-This extension provides robust syntax highlighting, code snippets, and a **Visual PWL Designer** for **HSPICE** netlists (`.sp`, `.lis`, `.hsp`). It is designed to make circuit simulation workflows faster and less error-prone.
+This extension provides robust syntax highlighting, code snippets, and visual tools for **HSPICE** netlists (`.sp`, `.lis`, `.hsp`). It is designed to make circuit simulation workflows faster and less error-prone.
 
 ## Features
 
-* **Visual PWL Designer (New!):**
+* **Visual Signal Generator (New!):**
+    * Interactively design **PULSE** and **SIN** voltage sources.
+    * **Real-time Visualization:** See waveforms update instantly as you adjust parameters.
+    * **Global Time Scaling:** Check signal alignment across multiple sources with a synchronized ruler.
+    * **Smart Formatting:** Automatic unit conversion (e.g., `100n`, `5u`).
+* **Visual PWL Designer:**
     * Graphically draw Piece-Wise Linear (PWL) sources.
-    * **Waveform Generator:** Automatically create Square, Triangle, and Sawtooth waves.
-    * Export generated code directly to your netlist.
+    * Waveform generator for Square, Triangle, and Sawtooth waves.
 * **Syntax Highlighting:**
     * Case-insensitive support (e.g., `.TRAN` and `.tran` are both recognized).
     * Differentiates between **Simulations** (`.tran`, `.ac`), **Definitions** (`.subckt`, `.param`), and **Options** (`.option`).
@@ -22,43 +26,46 @@ This extension provides robust syntax highlighting, code snippets, and a **Visua
 
 ---
 
+## Visual Signal Generator
+
+Design complex independent sources without memorizing the parameter order.
+
+![HSPICE Signal Generator](signal-generator.png)
+
+### Capabilities
+* **Multi-Signal Plotting:** Add as many sources as you need to visualize timing relationships.
+* **Synchronized Ruler:** A global crosshair allows you to verify timing across all cards simultaneously.
+* **Interactive Editing:** Click the **Gear** icon to fine-tune parameters (V1, V2, TD, TR, TF, PW, PER, etc.) with helpful tooltips.
+* **One-Click Export:** Instantly generate and copy the valid HSPICE netlist code.
+
+### How to Use
+1. Open the Command Palette (`Ctrl+Shift+P` or `Cmd+Shift+P`).
+2. Run **`HSPICE: Open Visual Signal Generator`**.
+
+---
+
 ## Visual PWL Designer
 
-Stop manually typing coordinate pairs! This extension includes a GUI to visualize and generate PWL sources.
+Stop manually typing coordinate pairs! This tool allows you to draw PWL sources point-by-point.
 
 ![HSPICE PWL Visual Designer](pwl-generator.png)
 
 ### How to Use
 1. Open the Command Palette (`Ctrl+Shift+P` or `Cmd+Shift+P`).
 2. Run **`HSPICE: Open Visual PWL Designer`**.
-3. **Draw:** Click on the canvas to add points. Drag points to adjust timing/voltage.
-4. **Edit:** Right-click a point to **Delete** it or **Snap** its voltage to the nearest neighbor.
-5. **Generate:** Right-click the background and select `Generate >` to create standard waveforms:
-    * **Square:** Set V_High, V_Low, Frequency, Duty Cycle, **Rise Time**, and **Fall Time**.
-    * **Triangle / Sawtooth:** Customizable frequency and voltage limits.
-6. **Export:** Click **"Insert to Editor"** to paste the generated SPICE code directly into your file.
 
 ---
 
-## HSPICE Cheat Sheet (Snippets)
+## Snippets Reference
 
-Type the **Trigger** command and press `Tab` or `Enter` to expand it.
+### Source Definitions
 
-### Documentation & Headers
-| Trigger | Name | Expands To |
+| Trigger | Name | Description |
 | :--- | :--- | :--- |
-| `header` | **Full Header** | Creates a file header block with Author, Date, and Description. |
-| `author` | **Author Signature** | Inserts `**** author: Name`. |
-| `datetime`| **Timestamp** | Inserts `**** created: [Current Date & Time]`. |
-
-### Sources & Stimuli
-
-| Trigger | Name | Expands To (Example) |
-| :--- | :--- | :--- |
-| `pulse` | **Pulse Source** | `PULSE(v1 v2 td tr tf pw per)` |
-| `sin` | **Sinusoidal** | `SIN(vo va freq td theta phase)` |
-| `pwl` | **Piece-Wise Linear** | `PWL(t1 v1 t2 v2 t3 v3)` |
-| `ic` | **Initial Condition** | `.IC V(node)=voltage` |
+| `pulse` | **Pulse Source** | Generates `PULSE(V1 V2 TD TR TF PW PER)` template. |
+| `sin` | **Sinusoidal** | Generates `SIN(VO VA FREQ TD THETA)` template. |
+| `pwl` | **PWL Source** | Template for Piece-Wise Linear source. |
+| `exp` | **Exponential** | Generates `EXP` source template. |
 
 ### Analysis Commands
 
@@ -89,13 +96,13 @@ This extension follows standard HSPICE formatting rules:
 | Element | Rule | Example |
 | :--- | :--- | :--- |
 | **Comments** | Starts with `*` (full line) or `$` (inline). | `* This is a comment` <br> `R1 1 0 1k $ Resistor` |
-| **Line Break** | Starts with `+` at the beginning of a line. | `.tran 1n 100n`<br>`+ start=0` |
-| **Numbers** | Supports engineering suffixes. | `10k`, `0.1u`, `10meg`, `1.5T` |
-| **Options** | Highlights keys and values differently. | `.option runlvl=6 method=gear` |
+| **Line Break** | Starts with `+` at the beginning of a line. | `.tran 1n 100n` <br> `+ start=0` |
+| **Units** | Case-insensitive engineering notation. | `10u`, `10U`, `1MEG`, `1k` |
 
 ---
 
 ## Author
 
 **Muhammad Shofuwan Anwar**
-Email: [muh.shofuwan.a@mail.ugm.ac.id](mailto:muh.shofuwan.a@mail.ugm.ac.id)
+* Email: muh.shofuwan.a@mail.ugm.ac.id
+* LinkedIn: [linkedin.com/in/mshofuwan-anwar/](https://www.linkedin.com/in/mshofuwan-anwar/)
