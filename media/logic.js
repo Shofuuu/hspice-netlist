@@ -70,7 +70,7 @@ export function snapToGlobalLevel() {
 
     const currV = points[appState.contextTargetIndex].v;
     const maxV = config.maxVoltsRaw * config.voltMult;
-    const threshold = maxV * 0.10; 
+    const threshold = maxV * 0.45; 
 
     let uniqueLevels = new Set();
     uniqueLevels.add(0);
@@ -97,6 +97,19 @@ export function openGenerator(type) {
     appState.activeGenType = type;
     document.getElementById('modal-overlay').style.display = 'flex';
     document.getElementById('modal-title').innerText = "Generate " + type;
+
+    const suffix = getTimeSuffix();
+    const ids = ['gen-unit-period', 'gen-unit-tr', 'gen-unit-tf', 'gen-unit-delay']; 
+    ids.forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.innerText = suffix;
+    });
+
+    document.getElementById('gen-delay').value = 0;
+
+    const dutyRow = document.getElementById('gen-duty').parentElement;
+    if(type === 'Square') dutyRow.style.display = 'flex';
+    else dutyRow.style.display = 'none';
 }
 
 export function closeGenerator() {
@@ -106,40 +119,61 @@ export function closeGenerator() {
 export function generateConfirmed() {
     const vHigh = parseFloat(document.getElementById('gen-vhigh').value);
     const vLow = parseFloat(document.getElementById('gen-vlow').value);
-    const period = parseFloat(document.getElementById('gen-period').value) * 1e-9;
+    const period = parseFloat(document.getElementById('gen-period').value) * config.timeMult;
     const cycles = parseInt(document.getElementById('gen-cycles').value);
     const duty = parseFloat(document.getElementById('gen-duty').value) / 100;
-    const tr = parseFloat(document.getElementById('gen-tr').value) * 1e-9;
-    const tf = parseFloat(document.getElementById('gen-tf').value) * 1e-9;
+    const tr = parseFloat(document.getElementById('gen-tr').value) * config.timeMult;
+    const tf = parseFloat(document.getElementById('gen-tf').value) * config.timeMult;
+    const delay = parseFloat(document.getElementById('gen-delay').value || 0) * config.timeMult;
 
     let newPoints = [];
+
+    if (delay > 0) {
+        newPoints.push({ t: 0, v: vLow });
+    }
+
     if (appState.activeGenType === 'Square') {
         for (let i = 0; i < cycles; i++) {
-            const start = i * period;
+            // Add 'delay' to the start time
+            const start = (i * period) + delay;
             const fall = start + (period * duty);
-            newPoints.push({ t: start, v: vLow }, { t: start + tr, v: vHigh }, { t: fall, v: vHigh }, { t: fall + tf, v: vLow });
+
+            newPoints.push(
+                { t: start, v: vLow }, 
+                { t: start + tr, v: vHigh }, 
+                { t: fall, v: vHigh }, 
+                { t: fall + tf, v: vLow }
+            );
         }
     } else if (appState.activeGenType === 'Triangle') {
         for (let i = 0; i < cycles; i++) {
-            const start = i * period;
-            newPoints.push({ t: start, v: vLow }, { t: start + period/2, v: vHigh });
+            const start = (i * period) + delay;
+            newPoints.push(
+                { t: start, v: vLow }, 
+                { t: start + period/2, v: vHigh }
+            );
         }
     } else if (appState.activeGenType === 'Sawtooth') {
         for (let i = 0; i < cycles; i++) {
-            const start = i * period;
-            newPoints.push({ t: start, v: vLow }, { t: start + period - tf, v: vHigh }, { t: start + period, v: vLow });
+            const start = (i * period) + delay;
+            newPoints.push(
+                { t: start, v: vLow }, 
+                { t: start + period - tf, v: vHigh }, 
+                { t: start + period, v: vLow }
+            );
         }
     }
-    newPoints.push({ t: cycles * period, v: vLow });
+
+    newPoints.push({ t: (cycles * period) + delay, v: vLow });
     setPoints(newPoints);
     
-    const totalTime = cycles * period;
+    const totalTime = (cycles * period) + delay;
     if (totalTime > config.maxTimeRaw * config.timeMult) {
         config.maxTimeRaw = Math.ceil((totalTime * 1.1) / config.timeMult);
         document.getElementById('maxTime').value = config.maxTimeRaw;
     }
     
-    generateCode(); draw(); closeGenerator();
+    generateCode(); draw(); autoScale(); closeGenerator();
 }
 
 export function getSnappedPoint(t, v) {

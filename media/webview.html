@@ -20,8 +20,8 @@
         <input type="number" id="maxTime" value="100" style="width:55px">
         <select id="timeUnit">
             <option value="1e-12">ps</option>
-            <option value="1e-9" selected>ns</option>
-            <option value="1e-6">us</option>
+            <option value="1e-9">ns</option>
+            <option value="1e-6" selected>us</option>
             <option value="1e-3">ms</option>
             <option value="1">s</option>
         </select>
@@ -37,7 +37,19 @@
         </select>
     </div>
     <div style="flex-grow:1"></div>
-    <button id="resetBtn">Reset View</button>
+    <button id="resetBtn" class="icon-btn" title="Clear All / Reset" style="color: #ff6b6b;">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+            <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+        </svg>
+    </button>
+
+    <button id="fitBtn" class="icon-btn" title="Fit View to Waveform">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M1.5 0A1.5 1.5 0 0 0 0 1.5v9A1.5 1.5 0 0 0 1.5 12h4a.5.5 0 0 0 0-1h-4a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-4a.5.5 0 0 0 0 1h4A1.5 1.5 0 0 0 16 10.5v-9A1.5 1.5 0 0 0 14.5 0h-13z"/>
+            <path d="M4.5 4a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 0-1H5v-2.5A.5.5 0 0 0 4.5 4zm7 0a.5.5 0 0 0-.5.5v2.5H8.5a.5.5 0 0 0 0 1h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5z"/>
+        </svg>
+    </button>
 </div>
 
 <div class="canvas-container" id="container">
@@ -46,8 +58,8 @@
 
 <div id="context-menu">
     <div class="menu-item" id="menu-add">Add Point Here</div>
-    <div class="menu-item" id="menu-grid">Change Grid Size...</div>
     <div class="menu-item" id="menu-snap">Snap to Nearest Y</div>
+    <div class="menu-item" id="menu-grid">Change Grid Size...</div>
     <div class="menu-item" id="menu-delete">Delete Point</div>
     <div class="menu-separator"></div>
     <div class="menu-item has-submenu">
@@ -72,7 +84,11 @@
             <input type="number" id="gen-vlow" value="0">
         </div>
         <div class="form-row">
-            <label>Period (ns) <i class="info-icon" data-tooltip="One cycle duration">i</i></label>
+            <label>Delay (<span id="gen-unit-delay">ns</span>)</label> 
+            <input type="number" id="gen-delay" value="0">
+        </div>
+        <div class="form-row">
+            <label>Period (<span id="gen-unit-period">ns</span>) <i class="info-icon" data-tooltip="One cycle duration">i</i></label>
             <input type="number" id="gen-period" value="20">
         </div>
         <div class="form-row">
@@ -84,15 +100,15 @@
             <input type="number" id="gen-duty" value="50">
         </div>
         <div class="form-row">
-            <label>Rise (ns)</label>
+            <label>Rise (<span id="gen-unit-tr">ns</span>)</label>
             <input type="number" id="gen-tr" value="0.1" step="0.1">
         </div>
         <div class="form-row">
-            <label>Fall (ns)</label>
+            <label>Fall (<span id="gen-unit-tf">ns</span>)</label>
             <input type="number" id="gen-tf" value="0.1" step="0.1">
         </div>
         <div class="form-row">
-            <label>Cycles</label>
+            <label>Cycles <i class="info-icon" data-tooltip="How much cycle do you want">i</i></label>
             <input type="number" id="gen-cycles" value="5">
         </div>
         <div class="modal-buttons">

@@ -32,6 +32,34 @@ function init() {
         draw(); generateCode();
     });
 
+    const fitBtn = document.getElementById('fitBtn');
+    if(fitBtn) {
+        fitBtn.addEventListener('click', () => {
+            // Guard 1: Safety check for empty data
+            if (!points || points.length < 2) return;
+
+            // Guard 2: Check for Flat Line (Prevent infinite zoom on default empty state)
+            let minV = points[0].v;
+            let maxV = points[0].v;
+            
+            // Find Min/Max manually (faster than spreading a large array)
+            for (let i = 1; i < points.length; i++) {
+                if (points[i].v < minV) minV = points[i].v;
+                if (points[i].v > maxV) maxV = points[i].v;
+            }
+
+            // If the signal is flat (difference is basically zero), DO NOTHING.
+            // This prevents the "zoomed into nothing" bug on the default 0V line.
+            if (Math.abs(maxV - minV) < 1e-15) {
+                return; 
+            }
+
+            // If we have a real signal, go ahead and scale
+            autoScale();
+            draw();
+        });
+    }
+
     document.getElementById('copyBtn').addEventListener('click', () => {
         vscode.postMessage({ command: 'copy', text: document.getElementById('codeOutput').innerText });
     });
@@ -120,19 +148,58 @@ canvas.addEventListener('mousemove', e => {
         appState.limitHit = false; 
 
         if (appState.dragIndex > 0) {
-            // Check Previous Point
-            if (newT <= points[appState.dragIndex - 1].t) {
-                newT = points[appState.dragIndex - 1].t;
+            const prev = points[appState.dragIndex - 1];
+            
+            if (newT <= prev.t) {
+                newT = prev.t; // Hit the wall
                 appState.limitHit = true;
                 appState.limitHitX = mapToPx(newT, 0).x;
+
+                // Smart Y Snapping:
+                // Check if the previous point is part of a vertical edge (same time as point before it)
+                if (appState.dragIndex > 1) {
+                    const prevPrev = points[appState.dragIndex - 2];
+                    
+                    // If vertical edge exists (time difference is negligible)
+                    if (Math.abs(prev.t - prevPrev.t) < 1e-15) {
+                        // We are hitting a wall defined by 'prev' and 'prevPrev'
+                        // Check which Y value is closer to the mouse
+                        const distToPrev = Math.abs(mouse.v - prev.v);
+                        const distToPrevPrev = Math.abs(mouse.v - prevPrev.v);
+                        
+                        // Snap Voltage to the closer corner
+                        if (distToPrevPrev < distToPrev) {
+                            mouse.v = prevPrev.v;
+                        } else {
+                            mouse.v = prev.v;
+                        }
+                    }
+                }
             }
         }
+
+        // 2. Check Forward Collision (same logic if dragging right)
         if (appState.dragIndex < points.length - 1) {
-            // Check Next Point
-            if (newT >= points[appState.dragIndex + 1].t) {
-                newT = points[appState.dragIndex + 1].t;
+            const next = points[appState.dragIndex + 1];
+            
+            if (newT >= next.t) {
+                newT = next.t;
                 appState.limitHit = true;
                 appState.limitHitX = mapToPx(newT, 0).x;
+
+                if (appState.dragIndex < points.length - 2) {
+                    const nextNext = points[appState.dragIndex + 2];
+                    if (Math.abs(next.t - nextNext.t) < 1e-15) {
+                        const distToNext = Math.abs(mouse.v - next.v);
+                        const distToNextNext = Math.abs(mouse.v - nextNext.v);
+                        
+                        if (distToNextNext < distToNext) {
+                            mouse.v = nextNext.v;
+                        } else {
+                            mouse.v = next.v;
+                        }
+                    }
+                }
             }
         }
         

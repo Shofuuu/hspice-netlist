@@ -6,13 +6,13 @@ export const menu = document.getElementById('context-menu');
 export const PAD = { left: 50, right: 20, top: 20, bottom: 30 };
 
 // Mutable State (Exported as let/objects so they can be modified)
-export let points = [{t: 0, v: 0}, {t: 100e-9, v: 0}];
+export let points = [{t: 0, v: 0}, {t: 100e-6, v: 0}];
 export let config = { 
     maxTimeRaw: 100,      
     maxVoltsRaw: 3.3,     
-    timeMult: 1e-9,       
+    timeMult: 1e-6,     
     voltMult: 1,
-    gridXRaw: 2.5, // 0 = Auto
+    gridXRaw: 1.25, // 0 = Auto
     gridYRaw: 0.1, // 0 = Auto
     snapEnabled: true
 };
