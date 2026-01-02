@@ -26,7 +26,7 @@ This extension provides robust syntax highlighting, code snippets, and a **Visua
 
 Stop manually typing coordinate pairs! This extension includes a GUI to visualize and generate PWL sources.
 
-![HSPICE PWL Visual Designer](pwl-generator-tool.png)
+![HSPICE PWL Visual Designer](pwl-generator.png)
 
 ### How to Use
 1. Open the Command Palette (`Ctrl+Shift+P` or `Cmd+Shift+P`).
