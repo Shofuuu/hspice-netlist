@@ -7,11 +7,7 @@ export function drawGlobalRuler(cursor) {
     const container = document.getElementById('cardContainer');
     if (!canvas || !container) return;
 
-    // ALIGNMENT FIX: Match the width of the card container (excluding scrollbar)
-    // We leave the canvas element wide, but we restrict drawing to the container's clientWidth
-    const alignedWidth = container.clientWidth;
-    
-    // Resize internal bitmap to match screen pixels for sharpness
+    // Resize canvas to match the screen pixels (resolution fix)
     const rect = canvas.parentElement.getBoundingClientRect();
     if (canvas.width !== rect.width || canvas.height !== rect.height) {
         canvas.width = rect.width;
@@ -24,8 +20,32 @@ export function drawGlobalRuler(cursor) {
 
     ctx.clearRect(0, 0, canvas.width, h);
 
-    // Use alignedWidth for calculations, not canvas.width
-    const drawW = alignedWidth - PAD_LEFT - PAD_RIGHT;
+    // --- DYNAMIC ALIGNMENT FIX ---
+    // We must match the EXACT width and offset of the signal canvases.
+    // CSS Padding (10px container + 5px card + 1px border) shifts them inward.
+    
+    let graphXOffset = 0;
+    let graphWidth = container.clientWidth; // Fallback
+
+    // Try to find an existing signal canvas to measure against
+    const referenceCanvas = container.querySelector('canvas');
+    if (referenceCanvas) {
+        const cRect = referenceCanvas.getBoundingClientRect();
+        const rRect = canvas.getBoundingClientRect();
+        
+        // Calculate relative position: Graph Left - Ruler Left
+        graphXOffset = cRect.left - rRect.left;
+        graphWidth = cRect.width;
+    } else {
+        // Fallback if no signals exist (Estimation based on your CSS)
+        // 10px (container) + 5px (card) + 1px (border) = 16px
+        const estPadding = 16; 
+        graphXOffset = estPadding;
+        graphWidth = container.clientWidth - (estPadding * 2); 
+    }
+
+    // Now calculate the drawing area based on these aligned values
+    const drawW = graphWidth - PAD_LEFT - PAD_RIGHT;
     const maxT = config.maxTimeRaw * config.timeMult;
 
     // --- Draw Ticks ---
@@ -38,7 +58,10 @@ export function drawGlobalRuler(cursor) {
     const steps = 10;
     for (let i = 0; i <= steps; i++) {
         const t = (i / steps) * maxT;
-        const x = PAD_LEFT + (i / steps) * drawW;
+        
+        // Map t to X using the OFFSET and WIDTH
+        // x = GraphStart + PadLeft + (Fraction * ActiveWidth)
+        const x = graphXOffset + PAD_LEFT + (i / steps) * drawW;
 
         ctx.beginPath();
         ctx.strokeStyle = tickColor;
@@ -48,16 +71,18 @@ export function drawGlobalRuler(cursor) {
         ctx.stroke();
 
         const label = formatEng(t);
-        // Only draw label if it fits
-        if (x < alignedWidth - 10) {
+        // Prevent label from being cut off on the right edge
+        if (x < graphXOffset + graphWidth + 10) {
             ctx.fillText(label, x, 8);
         }
     }
 
     // --- Draw Cursor Indicator on Ruler ---
     if (cursor && cursor.active && cursor.t !== null) {
-        const x = PAD_LEFT + (cursor.t / maxT) * drawW;
-        if (x < alignedWidth) { // Clip to align area
+        // Calculate X exactly the same way
+        const x = graphXOffset + PAD_LEFT + (cursor.t / maxT) * drawW;
+
+        if (x >= graphXOffset && x <= graphXOffset + graphWidth) { 
             ctx.fillStyle = '#f48771'; // Red highlight
             ctx.beginPath();
             ctx.moveTo(x - 4, 0);
@@ -200,33 +225,28 @@ export function drawPreview(signal, cursor) {
 
     // --- 5. CROSSHAIR & TOOLTIP ---
     if (cursor && cursor.active) {
-        const cursorColor = '#f48771'; // Reddish
+        const cursorColor = '#f48771'; 
         
         // A. Global Time Line (Vertical)
-        // We calculate X based on the cursor Time to ensure perfect sync
+        // Ensure this uses the same mapX logic
         const xPos = mapX(cursor.t);
         
-        // Only draw if within bounds
         if (xPos >= PAD_LEFT && xPos <= w - PAD_RIGHT) {
             ctx.beginPath();
             ctx.strokeStyle = cursorColor;
-            ctx.setLineDash([4, 2]); // Dashed line
+            ctx.setLineDash([4, 2]); 
             ctx.lineWidth = 1;
             ctx.moveTo(xPos, PAD_TOP);
             ctx.lineTo(xPos, h - PAD_BOTTOM);
             ctx.stroke();
-            ctx.setLineDash([]); // Reset
+            ctx.setLineDash([]); 
         }
 
         // B. Local Voltage Line (Horizontal) - Only on active card
         if (signal.id === cursor.activeId) {
-            const yPos = cursor.y; // Mouse Y is already local pixel coord
-            
-            // Convert pixel Y back to Voltage for display
-            // Inverse of mapY: v = scaleMin + ((PAD_TOP + drawH - y) / drawH) * scaleRange
+            const yPos = cursor.y; 
             const valAtCursor = scaleMin + ((PAD_TOP + drawH - yPos) / drawH) * scaleRange;
 
-            // Draw Horizontal Line
             if (yPos >= PAD_TOP && yPos <= h - PAD_BOTTOM) {
                 ctx.beginPath();
                 ctx.strokeStyle = cursorColor;
@@ -235,21 +255,18 @@ export function drawPreview(signal, cursor) {
                 ctx.lineTo(w - PAD_RIGHT, yPos);
                 ctx.stroke();
 
-                // Draw Tooltip (Floating Box)
+                // Tooltip
                 const text = `T: ${formatEng(cursor.t)}s  V: ${formatEng(valAtCursor)}V`;
                 const textWidth = ctx.measureText(text).width;
                 
-                // Smart positioning (don't go off screen)
                 let tx = xPos + 10;
                 let ty = yPos - 10;
                 if (tx + textWidth > w) tx = xPos - textWidth - 10;
                 if (ty < 20) ty = yPos + 20;
 
-                // Box
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
                 ctx.fillRect(tx - 4, ty - 12, textWidth + 8, 16);
                 
-                // Text
                 ctx.fillStyle = '#fff';
                 ctx.font = '11px monospace';
                 ctx.textAlign = 'left';
