@@ -1,18 +1,36 @@
-export function parseParamsToNum(params) {
+export function parseParamsToNum(params, lookup = []) {
     const res = {};
     const multipliers = { 'p': 1e-12, 'n': 1e-9, 'u': 1e-6, 'm': 1e-3, 'k': 1e3, 'meg': 1e6 };
     
+    // Create a map for quick access: { 'my_tr_var': 1e-9 }
+    const varMap = {};
+    lookup.forEach(p => {
+        varMap[p.name] = parseValue(p.value, multipliers);
+    });
+
     for (const [k, v] of Object.entries(params)) {
-        const str = String(v).trim().toLowerCase();
-        let val = parseFloat(str);
-        const match = str.match(/[a-z]+$/);
-        if (match) {
-            const suff = match[0];
-            if (multipliers[suff]) val *= multipliers[suff];
+        const str = String(v).trim();
+        
+        // 1. Check if it's a variable reference
+        if (varMap[str] !== undefined) {
+            res[k] = varMap[str];
+        } 
+        // 2. Otherwise parse as number
+        else {
+            res[k] = parseValue(str, multipliers);
         }
-        res[k] = isNaN(val) ? 0 : val;
     }
     return res;
+}
+
+function parseValue(str, multipliers) {
+    let val = parseFloat(str);
+    const match = str.toLowerCase().match(/[a-z]+$/);
+    if (match) {
+        const suff = match[0];
+        if (multipliers[suff]) val *= multipliers[suff];
+    }
+    return isNaN(val) ? 0 : val;
 }
 
 export function getDefaults(type) {

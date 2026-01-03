@@ -6,6 +6,7 @@ export const config = {
 };
 
 export let signals = [];
+export let globalParams = []; 
 
 export const LAYOUT = {
     PAD_LEFT: 45,  
@@ -17,4 +18,5 @@ export const LAYOUT = {
 export function addSignalToState(signal) { signals.push(signal); }
 export function removeSignalFromState(id) { signals = signals.filter(s => s.id !== id); }
 export function findSignal(id) { return signals.find(s => s.id === id); }
-export function clearSignals() { signals = []; }
+export function setGlobalParams(params) { globalParams = params; }
+export function clearSignals() { signals = []; globalParams = []; }

@@ -1,4 +1,4 @@
-import { config, signals, addSignalToState, removeSignalFromState, findSignal, LAYOUT } from './state.js';
+import { config, signals, globalParams, setGlobalParams, addSignalToState, removeSignalFromState, findSignal, LAYOUT } from './state.js';
 import { getDefaults } from './utils.js';
 import { drawPreview, drawGlobalRuler } from './draw.js';
 import { generateCode, copyCode, parseImportedCode } from './generator.js';
@@ -11,7 +11,14 @@ const elements = {
     editModal: document.getElementById('editModal'),
     editParamsContainer: document.getElementById('editParamsContainer'),
     globalMaxTime: document.getElementById('globalMaxTime'),
-    globalTimeUnit: document.getElementById('globalTimeUnit')
+    globalTimeUnit: document.getElementById('globalTimeUnit'),
+    globalParamBtn: document.getElementById('globalParamBtn'),
+    globalParamModal: document.getElementById('globalParamModal'),
+    globalParamsList: document.getElementById('globalParamsList'),
+    addGlobalParamBtn: document.getElementById('addGlobalParamBtn'),
+    globalParamType: document.getElementById('globalParamType'),
+    confirmGlobal: document.getElementById('saveGlobal'),
+    cancelGlobal: document.getElementById('cancelGlobal')
 };
 
 let currentEditingId = null; 
@@ -35,6 +42,18 @@ const paramTooltips = {
     'damp': 'Damping Factor (decay rate)',
     'phase': 'Phase Shift (Degrees)'
 };
+
+// Master list of available parameters
+const PARAM_OPTIONS = [
+    { value: 'tr', label: 'Rise Time (tr)' },
+    { value: 'tf', label: 'Fall Time (tf)' },
+    { value: 'pw', label: 'Pulse Width (pw)' },
+    { value: 'per', label: 'Period (per)' },
+    { value: 'v1', label: 'Voltage 1 (v1)' },
+    { value: 'v2', label: 'Voltage 2 (v2)' },
+    { value: 'freq', label: 'Frequency (freq)' },
+    { value: 'td', label: 'Time Delay (td)' }
+];
 
 // --- Initialization ---
 init();
@@ -77,6 +96,11 @@ function init() {
         }
     });
 
+    elements.globalParamBtn.onclick = openGlobalModal;
+    elements.addGlobalParamBtn.onclick = addGlobalParamItemUI;
+    elements.cancelGlobal.onclick = () => elements.globalParamModal.style.display = 'none';
+    elements.confirmGlobal.onclick = saveGlobalParams;
+
     setupCrosshairInteraction();
 }
 
@@ -115,6 +139,96 @@ function setupCrosshairInteraction() {
 }
 
 // --- Modals ---
+let tempGlobalParams = [];
+
+function openGlobalModal() {
+    // Clone existing globals to temp state
+    tempGlobalParams = globalParams.map(p => ({...p}));
+    renderGlobalParamsList();
+    updateParamDropdown();
+    elements.globalParamModal.style.display = 'flex';
+}
+
+function renderGlobalParamsList() {
+    elements.globalParamsList.innerHTML = '';
+    tempGlobalParams.forEach((gp, index) => {
+        const div = document.createElement('div');
+        div.className = 'global-param-item';
+        div.innerHTML = `
+            <span class="gp-label">${gp.type}</span>
+            <input type="text" class="gp-input" placeholder="Param Name" value="${gp.name}" onchange="updateTempGlobal(${index}, 'name', this.value)">
+            <input type="text" class="gp-input" placeholder="Value (e.g. 1n)" value="${gp.value}" onchange="updateTempGlobal(${index}, 'value', this.value)">
+            <button class="btn-icon danger" onclick="removeTempGlobal(${index})">&times;</button>
+        `;
+        elements.globalParamsList.appendChild(div);
+    });
+}
+
+function updateParamDropdown() {
+    const select = elements.globalParamType;
+    if (!select) return;
+
+    // Get types that are already used
+    const usedTypes = tempGlobalParams.map(p => p.type);
+
+    // Clear existing options
+    select.innerHTML = '';
+
+    // Add only unused options
+    PARAM_OPTIONS.forEach(opt => {
+        if (!usedTypes.includes(opt.value)) {
+            const option = document.createElement('option');
+            option.value = opt.value;
+            option.textContent = opt.label;
+            select.appendChild(option);
+        }
+    });
+
+    // Disable the Add button if no options are left
+    elements.addGlobalParamBtn.disabled = (select.options.length === 0);
+}
+
+// Expose these to window so HTML strings can call them
+window.updateTempGlobal = (index, field, val) => {
+    tempGlobalParams[index][field] = val;
+};
+window.removeTempGlobal = (index) => {
+    tempGlobalParams.splice(index, 1);
+    renderGlobalParamsList();
+    updateParamDropdown();
+};
+
+function addGlobalParamItemUI() {
+    const type = elements.globalParamType.value;
+    // Default naming convention
+    const count = tempGlobalParams.filter(p => p.type === type).length + 1;
+    const name = `g_${type}${count > 1 ? count : ''}`;
+    
+    tempGlobalParams.push({
+        type: type,
+        name: name,
+        value: '1n' // default value
+    });
+    renderGlobalParamsList();
+    updateParamDropdown();
+}
+
+function saveGlobalParams() {
+    setGlobalParams(tempGlobalParams);
+    
+    signals.forEach(s => {
+        tempGlobalParams.forEach(gp => {
+            if (s.params.hasOwnProperty(gp.type)) {
+                s.params[gp.type] = gp.name;
+            }
+        });
+    });
+
+    elements.globalParamModal.style.display = 'none';
+    refreshAllCanvases(); 
+    generateCode();       
+}
+
 function openModal(type) {
     if (type === 'add') elements.addModal.style.display = 'flex';
     if (type === 'edit') elements.editModal.style.display = 'flex';
@@ -135,7 +249,6 @@ function openEditModal(id) {
         const row = document.createElement('div');
         row.className = 'form-row';
         
-        // Tooltip logic
         const tipText = paramTooltips[key] || '';
         const tooltipHtml = tipText 
             ? `<div class="tooltip-icon">i<span class="tooltip-text">${tipText}</span></div>` 
@@ -172,19 +285,39 @@ function openEditModal(id) {
 function adjustInputValue(inputElement, direction) {
     let valStr = inputElement.value.trim();
     const match = valStr.match(/^([\d\.-]+)([a-z]*)$/i);
+    
     if (match) {
         let num = parseFloat(match[1]);
         const suffix = match[2];
+        
         if (!isNaN(num)) {
-            let step = 1;
-            if (match[1].includes('.')) step = 0.1;
-            num += (direction * step);
-            if (step < 1) {
-                const parts = match[1].split('.');
-                const decimals = parts[1] ? parts[1].length : 1;
-                num = parseFloat(num.toFixed(decimals));
+            let absVal = Math.abs(num);
+            if (absVal === 0) absVal = 0.1; 
+
+            // Calculate magnitude (power of 10)
+            // e.g., for 50 -> 10, for 1 -> 1, for 0.9 -> 0.1
+            let power = Math.floor(Math.log10(absVal));
+            let step = Math.pow(10, power);
+
+            const isPowerOf10 = Math.abs(absVal - step) < Number.EPSILON * 100;
+            
+            if (direction < 0 && isPowerOf10) {
+                step /= 10;
             }
+
+            num += (direction * step);
+
+            // Rounding to fix floating point errors (e.g. 0.300000004)
+            const decimals = Math.max(0, -Math.floor(Math.log10(step)));
+            num = parseFloat(num.toFixed(decimals));
+
+            // Prevent going to 0 or negative if that's not desired (optional safety)
+            // For now, we allow it, but the new logic makes hitting 0 much harder.
+            // If you strictly want to avoid 0/negative for time params:
+            // if (num <= 0 && ['tr','tf','pw','per'].includes(inputElement.dataset.key)) num = step;
             inputElement.value = num + suffix;
+            
+            inputElement.dispatchEvent(new Event('input'));
         }
     }
 }
@@ -203,7 +336,8 @@ function saveEditModal() {
     closeModal('edit');
 }
 
-// --- Signals (No Changes Needed Here) ---
+// --- Signals Logic ---
+
 function addSignal(type, defaults = {}) {
     const id = 'sig_' + Date.now() + Math.floor(Math.random() * 1000);
     const name = defaults.name || (type === 'pulse' ? `vpulse${signals.length+1}` : `vsin${signals.length+1}`);
@@ -215,6 +349,29 @@ function addSignal(type, defaults = {}) {
     generateCode(); 
 }
 
+// --- NEW: DUPLICATE FUNCTION ---
+function duplicateSignal(id) {
+    const original = findSignal(id);
+    if (!original) return;
+
+    // Create a deep copy of properties
+    const newId = 'sig_' + Date.now() + Math.floor(Math.random() * 1000);
+    const newName = original.name + '_cp'; // Append _cp to avoid name collision
+    const newParams = { ...original.params }; // Clone the parameters object
+
+    const newSignal = {
+        id: newId,
+        type: original.type,
+        name: newName,
+        params: newParams
+    };
+
+    addSignalToState(newSignal);
+    renderCard(newSignal);
+    checkEmptyState();
+    generateCode();
+}
+
 function deleteSignal(id) {
     removeSignalFromState(id);
     const card = document.getElementById(id);
@@ -223,7 +380,9 @@ function deleteSignal(id) {
     generateCode();
 }
 
+// Expose functions to window so HTML onClick works
 window.deleteSignal = deleteSignal; 
+window.duplicateSignal = duplicateSignal; // <--- EXPOSED HERE
 window.openEditModal = openEditModal; 
 
 function checkEmptyState() {
@@ -245,6 +404,7 @@ function renderCard(signal) {
     card.className = 'signal-card';
     card.id = signal.id;
 
+    // Added Copy Button (middle)
     const headerHtml = `
         <div class="card-header">
             <div class="card-title">
@@ -256,6 +416,12 @@ function renderCard(signal) {
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="3"></circle>
                         <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                </button>
+                <button class="btn-icon" onclick="duplicateSignal('${signal.id}')" title="Duplicate">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                     </svg>
                 </button>
                 <button class="btn-icon danger" onclick="deleteSignal('${signal.id}')" title="Delete">

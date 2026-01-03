@@ -1,4 +1,4 @@
-import { config, LAYOUT } from './state.js';
+import { config, LAYOUT, globalParams } from './state.js';
 import { parseParamsToNum, formatEng } from './utils.js';
 
 // --- Draw Global X-Axis Ruler ---
@@ -125,8 +125,8 @@ export function drawPreview(signal, cursor) {
         ctx.lineTo(x, h - PAD_BOTTOM);
     }
     ctx.stroke();
-
-    const p = parseParamsToNum(signal.params);
+    
+    const p = parseParamsToNum(signal.params, globalParams);
 
     // --- 2. Calculate Scale ---
     let vMin = 0, vMax = 1;

@@ -32,6 +32,11 @@ body {
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     z-index: 10;
 }
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px; 
+}
 .header-group { display: flex; align-items: center; gap: 15px; }
 .input-group { display: flex; align-items: center; gap: 5px; }
 
@@ -47,9 +52,43 @@ input:focus { border-color: #007acc; }
     border: none; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
 }
-.btn-add { background: #007acc; color: white; }
-.btn-secondary { background: transparent; border: 1px solid var(--border); color: var(--fg); padding: 5px 12px; cursor: pointer;}
-.btn-primary { background: #007acc; border: none; color: white; padding: 5px 12px; cursor: pointer;}
+.btn-main-menu { background: #007acc; color: white; }
+.btn-round.btn-secondary {
+    background: transparent;
+    border: 1px solid var(--btn-bg); /* Use theme blue/primary color */
+    color: var(--btn-bg);
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-round.btn-secondary:hover {
+    background: var(--btn-bg); /* Fill with color on hover */
+    color: var(--btn-fg);
+}
+
+/* 3. Fix for "Themeless" Cancel Buttons (Red Outline) */
+.btn-secondary {
+    background: transparent;
+    border: 1px solid #e55050; /* Red border */
+    color: #e55050;
+    padding: 6px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+    background: #e55050;
+    color: white;
+}
+.btn-primary { background: #007acc; border: none; color: white; padding: 5px 12px; cursor: pointer; }
 
 .btn-icon {
     background: transparent; border: none; color: var(--fg);
@@ -229,4 +268,27 @@ textarea {
     border-width: 5px;
     border-style: solid;
     border-color: #333 transparent transparent transparent;
+}
+
+.global-param-item {
+    display: flex; 
+    align-items: center; 
+    gap: 8px;
+    background: rgba(0,0,0,0.2); 
+    padding: 6px; 
+    border: 1px solid var(--border);
+    border-radius: 4px;
+}
+
+.gp-label {
+    width: 40px; 
+    font-weight: bold; 
+    color: #4caf50; 
+    text-transform: uppercase; 
+    font-size: 11px;
+}
+
+.gp-input {
+    flex: 1; 
+    min-width: 0; /* allows shrinking */
 }

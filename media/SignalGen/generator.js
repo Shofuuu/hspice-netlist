@@ -1,11 +1,20 @@
-// media/SignalGen/generator.js
-import { signals, vscode } from './state.js';
+import { signals, vscode, globalParams } from './state.js';
 
 export function generateCode() {
     const output = document.getElementById('outputCode');
     if(!output) return;
 
-    let code = `* HSPICE Signal Generation\n`;
+    let code = `**** Global Parameters and Configurations\n`;
+
+    if (globalParams && globalParams.length > 0) {
+        globalParams.forEach(gp => {
+            code += `.param ${gp.name} = ${gp.value}\n`;
+        });
+        code += `\n`;
+    }
+
+    code += `**** Signals\n`;
+
     signals.forEach(s => {
         const p = s.params;
         code += `${s.name} ${s.name} 0 `; 
