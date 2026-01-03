@@ -177,6 +177,11 @@ export function drawPreview(signal, cursor) {
     }
 
     // --- 4. Draw Waveform ---
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(PAD_LEFT, PAD_TOP, drawW, drawH);
+    ctx.clip();
+
     ctx.beginPath();
     ctx.strokeStyle = '#4caf50'; 
     ctx.lineWidth = 2;
@@ -222,6 +227,7 @@ export function drawPreview(signal, cursor) {
         }
     }
     ctx.stroke();
+    ctx.restore();
 
     // --- 5. CROSSHAIR & TOOLTIP ---
     if (cursor && cursor.active) {
