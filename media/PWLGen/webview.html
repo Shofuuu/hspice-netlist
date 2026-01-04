@@ -60,6 +60,7 @@
     <div class="menu-item" id="menu-add">Add Point Here</div>
     <div class="menu-item" id="menu-snap">Snap to Nearest Y</div>
     <div class="menu-item" id="menu-grid">Change Grid Size...</div>
+    <div class="menu-item" id="menu-slope">Slope Settings...</div>
     <div class="menu-item" id="menu-delete">Delete Point</div>
     <div class="menu-separator"></div>
     <div class="menu-item has-submenu">
@@ -150,6 +151,34 @@
         </button>
     </div>
     <div class="output-box" id="codeOutput">...</div>
+</div>
+
+<div id="modal-slope-overlay" class="modal-overlay">
+    <div class="modal modal-sm">
+        <h3>Slope Settings</h3>
+        <div class="form-row">
+            <label>Unit</label>
+            <select id="slope-unit">
+                <option value="1e-12">ps</option>
+                <option value="1e-9" selected>ns</option>
+                <option value="1e-6">us</option>
+                <option value="1e-3">ms</option>
+                <option value="1">s</option>
+            </select>
+        </div>
+        <div class="form-row">
+            <label>Rise Time</label> 
+            <input type="number" id="slope-tr" value="25">
+        </div>
+        <div class="form-row">
+            <label>Fall Time</label> 
+            <input type="number" id="slope-tf" value="25">
+        </div>
+        <div class="modal-buttons">
+            <button class="btn-cancel" id="slope-cancel">Cancel</button>
+            <button id="slope-confirm">Apply</button>
+        </div>
+    </div>
 </div>
 
 <script type="module" src="{{scriptUri}}"></script>

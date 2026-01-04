@@ -6,11 +6,38 @@ import { draw } from './draw.js';
 export function generateCode() {
     const sig = document.getElementById('sigName').value || 'v1';
     let str = `${sig} ${sig} 0 PWL(\n`;
-    points.forEach(p => {
-        const t = (p.t / config.timeMult).toFixed(3) + getTimeSuffix();
-        const v = (p.v / config.voltMult).toFixed(3) + getVoltSuffix();
-        str += `+ ${t} ${v}\n`;
+
+    const trVal = (typeof config.defTrRaw === 'number' ? config.defTrRaw : 25);
+    const tfVal = (typeof config.defTfRaw === 'number' ? config.defTfRaw : 25);
+    const slopeUnit = (typeof config.slopeMult === 'number' ? config.slopeMult : 1e-9);
+
+    const safeTr = trVal * slopeUnit;
+    const safeTf = tfVal * slopeUnit;
+
+    let lastWriteT = -1;
+    let lastWriteV = 0;
+
+    points.forEach((p, i) => {
+        let writeT = p.t;
+        const writeV = p.v;
+
+        if (i > 0) {
+            if (writeT <= lastWriteT + 1e-15) {
+                const isRising = writeV > lastWriteV;
+                const shift = isRising ? safeTr : safeTf;
+
+                writeT = lastWriteT + shift;
+            }
+        }
+
+        const tStr = (writeT / config.timeMult).toFixed(3) + getTimeSuffix();
+        const vStr = (writeV / config.voltMult).toFixed(3) + getVoltSuffix();
+        str += `+ ${tStr} ${vStr}\n`;
+
+        lastWriteT = writeT;
+        lastWriteV = writeV;
     });
+
     str += "+ )";
     document.getElementById('codeOutput').innerText = str;
 }
@@ -235,4 +262,32 @@ export function saveGridSettings() {
         // Fallback if draw isn't imported correctly
         console.warn("Draw function missing in logic.js");
     }
+}
+
+export function openSlopeSettings() {
+    menu.style.display = 'none';
+    
+    // Load current values
+    document.getElementById('slope-tr').value = config.defTrRaw;
+    document.getElementById('slope-tf').value = config.defTfRaw;
+    
+    // Set unit selector
+    const sel = document.getElementById('slope-unit');
+    for(let i=0; i<sel.options.length; i++) {
+        if(parseFloat(sel.options[i].value) === config.slopeMult) sel.selectedIndex = i;
+    }
+
+    document.getElementById('modal-slope-overlay').style.display = 'flex';
+}
+
+export function closeSlopeSettings() {
+    document.getElementById('modal-slope-overlay').style.display = 'none';
+}
+
+export function saveSlopeSettings() {
+    config.defTrRaw = parseFloat(document.getElementById('slope-tr').value) || 0;
+    config.defTfRaw = parseFloat(document.getElementById('slope-tf').value) || 0;
+    config.slopeMult = parseFloat(document.getElementById('slope-unit').value) || 1e-9;
+    
+    closeSlopeSettings();
 }

@@ -1,19 +1,18 @@
 // main.js
-import { vscode, canvas, menu, points, config, appState, mouse, setPoints, splicePoints, pushPoint, sortPoints } from './state.js';
+import { 
+    vscode, canvas, menu, 
+    points, config, appState, 
+    mouse, setPoints, splicePoints, 
+    pushPoint, sortPoints
+} from './state.js';
 import { mapToPx, mapToUnits } from './utils.js';
 import { draw } from './draw.js';
 import { 
-    generateCode, 
-    importFromText, 
-    autoScale, 
-    snapToGlobalLevel, 
-    openGenerator, 
-    closeGenerator, 
-    generateConfirmed,
-    openGridSettings,
-    closeGridSettings,
-    saveGridSettings,
-    getSnappedPoint // <--- FIX #1: ADD THIS IMPORT
+    generateCode, importFromText, autoScale, 
+    snapToGlobalLevel, openGenerator, closeGenerator, 
+    generateConfirmed, openGridSettings, closeGridSettings,
+    saveGridSettings, getSnappedPoint, openSlopeSettings,
+    closeSlopeSettings, saveSlopeSettings
 } from './logic.js';
 
 // --- Initialization ---
@@ -99,6 +98,11 @@ function init() {
             }
         }
     });
+
+    // Slope editor
+    document.getElementById('menu-slope').addEventListener('click', openSlopeSettings);
+    document.getElementById('slope-confirm').addEventListener('click', saveSlopeSettings);
+    document.getElementById('slope-cancel').addEventListener('click', closeSlopeSettings);
 
     updateConfig();
     requestAnimationFrame(animLoop);
@@ -249,11 +253,13 @@ function onContextMenu(e) {
 }
 
 function addPointAtMouse() {
-    // <--- FIX #2: USE clickPos, NOT mouse ---
-    pushPoint({ t: appState.clickPos.t, v: appState.clickPos.v });
-    
+    let p = { t: appState.clickPos.t, v: appState.clickPos.v };
+
+    pushPoint(p);
     sortPoints();
-    generateCode(); draw();
+    generateCode(); 
+    draw();
+    
     menu.style.display = 'none';
 }
 

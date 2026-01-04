@@ -12,9 +12,12 @@ export let config = {
     maxVoltsRaw: 3.3,     
     timeMult: 1e-6,     
     voltMult: 1,
-    gridXRaw: 1.25, // 0 = Auto
-    gridYRaw: 0.1, // 0 = Auto
-    snapEnabled: true
+    gridXRaw: 0.05, // 0 = Auto
+    gridYRaw: 0.05, // 0 = Auto
+    snapEnabled: true,
+    defTrRaw: 25,       // Default 25ns
+    defTfRaw: 25,       // Default 25ns
+    slopeMult: 1e-9     // Default unit ns
 };
 
 export let appState = {
